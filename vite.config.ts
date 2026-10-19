@@ -8,6 +8,9 @@ import { defineConfig } from "vite-plus";
 
 const path = (relative: string) => fileURLToPath(new URL(relative, import.meta.url));
 
+/** Every path except /api: the dev server leaves these to Vite (it only has "skip", no "only"). */
+const notApi = /^(?!\/api(\/|\?|$))/;
+
 // Vite keeps .env out of process.env; load it so PORT and the API's settings
 // (DATABASE_PATH, CFLOW_PLUGINS, …) apply to `vp dev` too.
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -20,14 +23,14 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    // `vp dev` also serves the API: /api and /health go to the Hono app in api/src/dev.ts, everything else
-    // stays with Vite. Left out of the test runs, which start their own app per test.
+    // `vp dev` also serves the API: /api goes to the Hono app in api/src/dev.ts, everything else stays with
+    // Vite. Left out of the test runs, which start their own app per test.
     ...(process.env.VITEST
       ? []
       : [
           devServer({
             entry: path("./api/src/dev.ts"),
-            exclude: [/^(?!\/(api|health)(\/|\?|$))/],
+            exclude: [notApi],
             injectClientScript: false,
           }),
         ]),
@@ -41,6 +44,13 @@ export default defineConfig({
   server: {
     port: Number(process.env.PORT ?? 5173),
   },
+  // `vp pack` bundles the production server into dist/server.mjs (dependencies stay external), so
+  // production runs plain JavaScript: `bun dist/server.mjs`.
+  pack: {
+    entry: { server: path("./api/src/node.ts") },
+    tsconfig: path("./api/tsconfig.json"),
+    outDir: path("./dist"),
+  },
   test: {
     projects: [
       { extends: true, test: { name: "api", root: path("./api"), environment: "node" } },
@@ -49,7 +59,6 @@ export default defineConfig({
         test: {
           name: "web",
           root: path("./web"),
-          setupFiles: ["./tests/setup.ts"],
           browser: {
             enabled: true,
             provider: playwright(),

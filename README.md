@@ -26,13 +26,15 @@ bun install
 mise run dev          # web app and API together on :5173 (PORT)
 ```
 
-`vp dev` is one process: `@hono/vite-dev-server` hands `/api` and `/health`
+`vp dev` is one process: `@hono/vite-dev-server` hands `/api`
 to the Hono app in `api/src/dev.ts` and Vite serves everything else, so the
 browser talks to one origin and no CORS setup is needed. Editing an API file
 reloads the API (the previous plugin host and database connection are closed
-first). The port comes from `PORT`. `mise run start` (or `bun run start`) is production: it builds the web app
-into `web/dist/`, then `api/src/node.ts` serves it and the API on one port
-(`PORT`), with `index.html` for client-side routes.
+first). The port comes from `PORT`. `mise run start` (or `bun run start`) is production. `bun run build` builds
+the web app into `web/dist/` (`vp build`) and bundles the server, from
+`api/src/node.ts`, into `dist/server.mjs` (`vp pack`, dependencies left
+external); then `bun dist/server.mjs` (or `node`) serves the app and the API on
+one port (`PORT`), with `index.html` for client-side routes.
 
 There are no migrations: on start, auth and every plugin (the ledger
 included) create their tables with `CREATE TABLE IF NOT EXISTS`, and the
@@ -40,9 +42,27 @@ built-in categories are seeded into an empty database. By
 default the database is `data/cflow.db` at the repo root; back it up by copying the file.
 
 ```sh
-mise run check        # format, lint, typecheck the API and the web app
+mise run check        # vp check: format, lint and type-check the API and the web app
 mise run test
 ```
+
+## Docker
+
+```sh
+docker compose up -d          # builds the image, then http://localhost:3000
+```
+
+The image (`Dockerfile`) builds the web app in one stage and runs it in a
+slim Bun image with only the API's runtime dependencies. It serves the app
+and the API on port 3000 as the unprivileged `bun` user, keeps the database
+in the `/data` volume (`/data/cflow.db`), and has a health check on
+`/health`.
+
+`compose.yaml` maps the port (`CFLOW_HOST_PORT`, default 3000) and passes
+`APP_TIMEZONE`, `SESSION_TTL_DAYS`, `ALLOW_GUEST` and `CFLOW_PLUGINS` from
+your environment or a `.env` next to it. `PORT` and `DATABASE_PATH` come from
+the image (3000 and `/data/cflow.db`), not from `.env`. To back up, copy the database out:
+`docker compose cp cflow:/data/cflow.db ./cflow-backup.db`.
 
 ## Structure
 
@@ -52,7 +72,7 @@ its own `tsconfig.json` (Node types vs. DOM and JSX). Imports use `@api/`
 (`api/src`) and `@web/` (`web/src`).
 
 ```
-package.json              every dependency, and scripts: check, test, dev, build, preview
+package.json              every dependency, and scripts: check, test, dev, build, start
 vite.config.ts            format and lint rules, aliases, web dev/build, api and web test projects
 api/                      Hono API
   src/

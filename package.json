@@ -4,13 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "vp fmt --check && vp lint && tsc --noEmit -p api && tsc --noEmit -p web",
-    "check:fix": "vp fmt && vp lint --fix && tsc --noEmit -p api && tsc --noEmit -p web",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
     "test": "vp test",
     "dev": "vp dev",
-    "build": "vp build",
-    "preview": "vp preview",
-    "start": "vp build && bun --tsconfig-override=api/tsconfig.json api/src/node.ts"
+    "build": "vp build && vp pack",
+    "start": "bun run build && bun dist/server.mjs"
   },
   "dependencies": {
     "@esauflores/plugin-sdk": "^0.1.0",

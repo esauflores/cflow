@@ -1,0 +1,11 @@
+node_modules
+web/dist
+data
+.env
+.env.*
+!.env.example
+.git
+.vitest
+coverage
+Dockerfile
+compose.yaml

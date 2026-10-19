@@ -6,7 +6,7 @@ node = "24"
 bun = "latest"
 
 [tasks.check]
-description = "Format, lint and typecheck the API and the web app"
+description = "vp check: format, lint and type-check the API and the web app"
 run = "bun run check"
 
 [tasks.check-fix]

@@ -1,0 +1,22 @@
+# docker compose up -d   →   http://localhost:3000
+# Settings come from the environment (or a .env next to this file); the
+# database is the `cflow-data` volume, so back it up by copying /data/cflow.db.
+services:
+  cflow:
+    build: .
+    image: cflow:0.1.0
+    restart: unless-stopped
+    ports:
+      - "${CFLOW_HOST_PORT:-3000}:3000"
+    # PORT and DATABASE_PATH come from the image (3000, /data/cflow.db), so .env's development values for
+    # them don't apply here.
+    environment:
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
+      ALLOW_GUEST: ${ALLOW_GUEST:-false}
+      CFLOW_PLUGINS: ${CFLOW_PLUGINS:-}
+    volumes:
+      - cflow-data:/data
+
+volumes:
+  cflow-data:
