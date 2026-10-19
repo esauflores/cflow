@@ -1,6 +1,6 @@
 # CFlow (TypeScript)
 
-A self-hosted, single-user port of the [CFlow Financial Engine](../CFlow-Financial-Engine)
+A self-hosted, single-user port of the [BFlow Financial Engine](https://github.com/DiazzzDev/BFlow-Financial-Engine)
 (Spring Boot) to Hono and libSQL, with a React web app. It tracks
 one account: its transactions and categories.
 Budgets and reports were ported too and are parked until they come back as
