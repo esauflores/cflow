@@ -13,6 +13,9 @@ export type Executor = Pick<Client | Transaction, "execute">;
 export async function openDatabase(path: string): Promise<Client> {
   const client = createClient({ url: path === ":memory:" ? path : `file:${path}` });
   await client.execute("PRAGMA foreign_keys = ON");
+  // WAL lets reads go on while a write is in progress. It is stored in the file, so it holds for every
+  // pooled connection; an in-memory database ignores it.
+  await client.execute("PRAGMA journal_mode = WAL");
   return client;
 }
 
