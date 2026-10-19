@@ -54,14 +54,13 @@ docker compose up -d          # builds the image, then http://localhost:3000
 
 The image (`Dockerfile`) builds the web app in one stage and runs it in a
 slim Bun image with only the API's runtime dependencies. It serves the app
-and the API on port 3000 as the unprivileged `bun` user, keeps the database
-in the `/data` volume (`/data/cflow.db`), and has a health check on
-`/health`.
+and the API on port 3000 as the unprivileged `bun` user, and keeps the
+database at `/data/cflow.db` (the image sets `DATABASE_PATH`).
 
-`compose.yaml` maps the port (`CFLOW_HOST_PORT`, default 3000) and passes
-`APP_TIMEZONE`, `SESSION_TTL_DAYS`, `ALLOW_GUEST` and `CFLOW_PLUGINS` from
-your environment or a `.env` next to it. `PORT` and `DATABASE_PATH` come from
-the image (3000 and `/data/cflow.db`), not from `.env`. To back up, copy the database out:
+`compose.yaml` declares the service, its variables (plain values: `PORT`,
+`APP_TIMEZONE`, `SESSION_TTL_DAYS`, `ALLOW_GUEST`, `CFLOW_PLUGINS`), the
+`cflow-data` volume at `/data` and a health check on
+`/health`. Edit the values there. To back up, copy the database out:
 `docker compose cp cflow:/data/cflow.db ./cflow-backup.db`.
 
 ## Structure

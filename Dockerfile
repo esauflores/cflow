@@ -19,11 +19,8 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production && rm -rf ~/.bun/install/cache
 COPY --from=build /app/dist/server.mjs dist/server.mjs
 COPY --from=build /app/web/dist web/dist
-# The database lives in a volume, owned by the unprivileged `bun` user the server runs as.
+# The database lives in /data: mount a volume there (compose declares one).
 RUN mkdir -p /data && chown bun:bun /data
-VOLUME /data
 USER bun
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
-  CMD bun -e "fetch('http://localhost:' + (process.env.PORT ?? 3000) + '/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 CMD ["bun", "dist/server.mjs"]
