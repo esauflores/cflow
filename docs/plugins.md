@@ -11,6 +11,11 @@ CFLOW_PLUGIN_RECEIPTS_API_KEY=…      # settings for "receipts"
 
 Startup fails if `core` is missing, a name isn't a plugin, or a name is listed twice.
 
+| Plugin | What it adds                                                                                         |
+| ------ | ---------------------------------------------------------------------------------------------------- |
+| `core` | Transactions, balance and categories; always on                                                      |
+| `i18n` | Spanish: the app follows the browser's language, and Settings → Preferences can pick one (see below) |
+
 ## Writing one
 
 1. Create `api/src/plugins/<name>/index.ts` exporting the plugin.
@@ -42,13 +47,28 @@ export const receiptsPlugin = definePlugin({
 });
 ```
 
+## i18n
+
+The web app is written in English and passes its text through `t()` (`web/src/lib/i18n.ts`). The
+plugin serves the translations, English text → translation (`api/src/plugins/i18n/es.ts`):
+`GET /api/plugins/i18n/es` returns `{ language, messages }`. These routes are public, so the login
+screen can use them. Each browser follows its own language (`es-*` gets Spanish) until a language is
+picked in Settings, which that browser remembers. Dates and numbers follow the language too (`es-US`,
+so dollars stay `$1,234.50`).
+
+To translate new text, wrap it in `t("…")` and add the Spanish to `es.ts`; a test fails for any
+`t("…")` without a translation, or whose `{placeholders}` differ. Default categories are stored in
+English and shown translated. API errors are translated in the browser from their `template` and
+`params`, with the values translated too ("expense" → "gasto"); the same test covers every message the
+API sends.
+
 ## Services
 
 | Service  | Purpose                                                                                                                    |
 | -------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `ledger` | Transactions, balance and categories, with the REST API's validation (list `core` in `dependsOn`)                          |
 | `db`     | The `@libsql/client` `Client`: plain SQL, so use any query library (or none) on top. Own tables must be prefixed `<name>_` |
-| `routes` | `mount(path, hono)` under `/api`; plugins use `/plugins/<name>`                                                            |
+| `routes` | `mount(path, hono)` under `/api`, behind auth; `{ public: true }` serves read-only, non-private routes without a session   |
 | `clock`  | The app clock: use it instead of `new Date()`                                                                              |
 
 `ctx.options`, `ctx.log`, `ctx.hooks`, `ctx.signal` and `ctx.onDispose` come from the SDK.

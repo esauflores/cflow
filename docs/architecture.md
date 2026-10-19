@@ -22,7 +22,8 @@ api/
 web/
   src/
     main.tsx              query client, routes, auth gate
-    lib/                  api.ts (client, types, session), utils.ts (formatting, theme)
+    lib/                  api.ts (client, types, session), i18n.ts (t(), language), utils.ts
+                          (formatting, theme)
     components/           ui/ (shadcn), Charts.tsx (plain SVG and Motion), Shell, TransactionDialog,
                           DatePicker, Logo, Money
     pages/                Login, Dashboard, Transactions, Settings

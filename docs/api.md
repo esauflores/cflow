@@ -4,7 +4,8 @@
 
 There are no user accounts. One server password protects the instance:
 
-1. `GET /api/auth/status` returns `{ bootstrapped, allowGuest }`.
+1. `GET /api/auth/status` returns `{ bootstrapped, allowGuest, plugins }`, where `plugins` lists the
+   enabled ones.
 2. `POST /api/auth/bootstrap { password }` runs once: it sets the password and returns a session.
 3. `POST /api/auth/login { password }` returns `{ token, expiresAt, guest }`. After 5 failed attempts
    in 15 minutes from one client it answers 429 with `Retry-After`.
@@ -21,8 +22,12 @@ rather than to the proxy.
 ## Format
 
 Successful responses are `{ success: true, data }`. Errors are
-`{ success: false, message, code, timestamp, path }`, plus, for
-validation failures, `errors: [{ field, code, message }]`. Deletes answer 204 with no body.
+`{ success: false, message, code, timestamp, path }`, plus, for validation failures,
+`errors: [{ field, code, message }]`. Deletes answer 204 with no body.
+
+`message` is English. When it holds values, the error (or field error) also carries `template` and
+`params`, e.g. `"There is already an {type} category named \"{name}\""` with
+`{ "type": "expense", "name": "Food" }`, so a client can show it in another language.
 
 Lists take `page`, `size` and `sort=field,asc|desc` and return
 `{ content, page: { size, number, totalElements, totalPages } }`.

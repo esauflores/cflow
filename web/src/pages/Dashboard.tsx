@@ -18,12 +18,22 @@ import {
   useSummary,
   useTransactions,
 } from "@web/lib/api.ts";
+import { locale, t } from "@web/lib/i18n.ts";
 import { categoryColors, cn, formatMoney, greeting, percentChange } from "@web/lib/utils.ts";
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const monthLong = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-const monthOnly = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" });
-const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+// Formats in the current language, made when used so they follow a language change.
+const format = (options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat(locale(), { ...options, timeZone: "UTC" });
+const monthLong = (date: Date) => format({ month: "long", year: "numeric" }).format(date);
+const monthOnly = (date: Date) => format({ month: "long" }).format(date);
+const shortDate = (date: Date) => format({ month: "short", day: "numeric" }).format(date);
+/** "Jan" … "Dec", or "ene" … "dic". */
+const monthNames = () =>
+  Array.from({ length: 12 }, (_, i) =>
+    format({ month: "short" })
+      .format(new Date(Date.UTC(2000, i, 1)))
+      .replace(".", ""),
+  );
 
 /** Cards grow in, all at once. They start smaller, never offset, so the page never outgrows the window. */
 const stagger: Variants = { show: {} };
@@ -77,8 +87,9 @@ export function Dashboard() {
         <div>
           <h2 className="text-3xl font-semibold tracking-tight">{greeting()}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Here's where your money stands{" "}
-            {month === thisMonth ? "this month" : `in ${monthLong.format(asDate(month))}`}.
+            {month === thisMonth
+              ? t("Here's where your money stands this month.")
+              : t("Here's where your money stands in {month}.", { month: monthLong(asDate(month)) })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -86,18 +97,16 @@ export function Dashboard() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Previous month"
+              aria-label={t("Previous month")}
               onClick={() => setMonth(shiftMonth(month, -1))}
             >
               <ChevronLeft />
             </Button>
-            <span className="min-w-32 text-center text-sm font-medium tabular-nums">
-              {monthLong.format(asDate(month))}
-            </span>
+            <span className="min-w-32 text-center text-sm font-medium tabular-nums">{monthLong(asDate(month))}</span>
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Next month"
+              aria-label={t("Next month")}
               disabled={month >= thisMonth}
               onClick={() => setMonth(shiftMonth(month, 1))}
             >
@@ -106,7 +115,7 @@ export function Dashboard() {
           </div>
           {!guest && (
             <Button onClick={() => openDialog()}>
-              <Plus /> New transaction
+              <Plus /> {t("New transaction")}
             </Button>
           )}
         </div>
@@ -141,15 +150,15 @@ export function Dashboard() {
 }
 
 /** A change against last month: green when up, red when down. */
-function Change({ value, suffix = "vs last month" }: { value: number | null; suffix?: string }) {
-  if (value === null) return <span className="text-muted-foreground">Nothing last month</span>;
+function Change({ value }: { value: number | null }) {
+  if (value === null) return <span className="text-muted-foreground">{t("Nothing last month")}</span>;
   return (
     <span className="text-muted-foreground">
       <span className={signColor(value)}>
         {value > 0 ? "+" : ""}
         {value}%
       </span>{" "}
-      {suffix}
+      {t("vs last month")}
     </span>
   );
 }
@@ -174,7 +183,7 @@ function Stats({ data }: { data: Summary | undefined }) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
-        label="Balance"
+        label={t("Balance")}
         footer={
           data ? (
             // The previous month closed at this balance minus this month's net.
@@ -189,25 +198,25 @@ function Stats({ data }: { data: Summary | undefined }) {
         )}
       </StatCard>
       <StatCard
-        label="Income"
+        label={t("Income")}
         footer={data ? <Change value={percentChange(data.current.income, data.previous.income)} /> : null}
       >
         {data ? <Money amount={data.current.income} countUp className="text-income" /> : "…"}
       </StatCard>
       <StatCard
-        label="Spending"
+        label={t("Spending")}
         footer={data ? <Change value={percentChange(data.current.spending, data.previous.spending)} /> : null}
       >
         {data ? <Money amount={data.current.spending} countUp className="text-spending" /> : "…"}
       </StatCard>
       <StatCard
-        label="Net this month"
+        label={t("Net this month")}
         footer={
           saved === null ? (
-            <span className="text-muted-foreground">No income yet</span>
+            <span className="text-muted-foreground">{t("No income yet")}</span>
           ) : (
             <span className="text-muted-foreground">
-              <span className={cn("font-medium", signColor(saved))}>{saved}%</span> of income saved
+              <span className={cn("font-medium", signColor(saved))}>{saved}%</span> {t("of income saved")}
             </span>
           )
         }
@@ -223,15 +232,16 @@ function Stats({ data }: { data: Summary | undefined }) {
 }
 
 function IncomeVsSpending({ data }: { data: Summary | undefined }) {
-  const selected = data ? MONTH_NAMES[Number(data.month.slice(5)) - 1]! : "";
+  const names = monthNames();
+  const selected = data ? names[Number(data.month.slice(5)) - 1]! : "";
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
         <div className="grid gap-1">
-          <CardTitle>Income vs spending</CardTitle>
+          <CardTitle>{t("Income vs spending")}</CardTitle>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <Legend color="bg-income">Income</Legend>
-            <Legend color="bg-spending">Spending</Legend>
+            <Legend color="bg-income">{t("Income")}</Legend>
+            <Legend color="bg-spending">{t("Spending")}</Legend>
           </div>
         </div>
       </CardHeader>
@@ -242,10 +252,10 @@ function IncomeVsSpending({ data }: { data: Summary | undefined }) {
             <BarChart
               // Remounted per year, so a new year's bars grow in; within a year only the highlight moves.
               key={data.month.slice(0, 4)}
-              data={data.months.map((m, i) => ({ label: MONTH_NAMES[i]!, income: m.income, spending: m.spending }))}
+              data={data.months.map((m, i) => ({ label: names[i]!, income: m.income, spending: m.spending }))}
               series={[
-                { key: "income", label: "Income", color: "var(--income)" },
-                { key: "spending", label: "Spending", color: "var(--spending)" },
+                { key: "income", label: t("Income"), color: "var(--income)" },
+                { key: "spending", label: t("Spending"), color: "var(--spending)" },
               ]}
               selected={selected}
               format={formatMoney}
@@ -291,7 +301,7 @@ function WhereItWent({ data }: { data: Summary | undefined }) {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Where it went</CardTitle>
+        <CardTitle>{t("Where it went")}</CardTitle>
         {data && (
           <span className="text-sm text-muted-foreground tabular-nums">{formatMoney(data.current.spending)}</span>
         )}
@@ -313,7 +323,7 @@ function WhereItWent({ data }: { data: Summary | undefined }) {
               >
                 <div className="flex items-center gap-2 text-sm">
                   <span className="size-2 shrink-0 rounded-full" style={{ background: colorOf(c.id) }} />
-                  <span className="flex-1 truncate">{c.name}</span>
+                  <span className="flex-1 truncate">{t(c.name)}</span>
                   <span className="font-medium tabular-nums">{formatMoney(c.amount)}</span>
                   <span className="w-10 text-right text-xs text-muted-foreground tabular-nums">
                     {Math.round(c.share)}%
@@ -344,21 +354,21 @@ function RecentActivity({ onOpen }: { onOpen: (transaction: Transaction) => void
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Recent activity</CardTitle>
+        <CardTitle>{t("Recent activity")}</CardTitle>
         <Link to="/transactions" className="text-sm font-medium text-primary hover:underline">
-          See all
+          {t("See all")}
         </Link>
       </CardHeader>
       <CardContent>
         {recent.data?.content.length === 0 && (
-          <p className="py-6 text-center text-sm text-muted-foreground">No transactions yet.</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("No transactions yet.")}</p>
         )}
         {/* popLayout takes the row that drops off out of the flow at once, so the card never grows. */}
         <ul className="relative divide-y overflow-hidden">
           <AnimatePresence initial={false} mode="popLayout">
-            {recent.data?.content.slice(0, 5).map((t) => (
+            {recent.data?.content.slice(0, 5).map((tx) => (
               <motion.li
-                key={t.id}
+                key={tx.id}
                 layout
                 layoutDependency={recent.data?.content
                   .slice(0, 5)
@@ -370,26 +380,26 @@ function RecentActivity({ onOpen }: { onOpen: (transaction: Transaction) => void
               >
                 <button
                   type="button"
-                  onClick={() => onOpen(t)}
+                  onClick={() => onOpen(tx)}
                   className="group flex w-full items-center gap-3 py-2.5 text-left"
                 >
                   <span
                     className="flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold transition-transform group-hover:scale-105"
                     style={{
-                      color: colorOf(t.category.id),
-                      background: `color-mix(in oklab, ${colorOf(t.category.id)} 15%, transparent)`,
+                      color: colorOf(tx.category.id),
+                      background: `color-mix(in oklab, ${colorOf(tx.category.id)} 15%, transparent)`,
                     }}
                     aria-hidden
                   >
-                    {t.category.name.charAt(0)}
+                    {t(tx.category.name).charAt(0)}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{t.title}</span>
+                    <span className="block truncate font-medium">{tx.title}</span>
                     <span className="block text-xs text-muted-foreground">
-                      {t.category.name} · {shortDate.format(new Date(`${t.date}T00:00:00Z`))}
+                      {t(tx.category.name)} · {shortDate(new Date(`${tx.date}T00:00:00Z`))}
                     </span>
                   </span>
-                  <Money amount={t.amount} signed className={cn("font-semibold", t.amount > 0 && "text-income")} />
+                  <Money amount={tx.amount} signed className={cn("font-semibold", tx.amount > 0 && "text-income")} />
                   <ChevronRight
                     className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
                     aria-hidden
@@ -417,8 +427,8 @@ function MonthRing({ data }: { data: Summary | undefined }) {
   // Ring 0 is the innermost. With no income, any spending fills the ring.
   const scale = income > 0 ? income : Math.max(spent, 1);
   const rings = [
-    { label: "Spent", value: Math.min(spent, scale), max: scale, color: "var(--spending)" },
-    { label: "Kept", value: kept, max: scale, color: "#22c55e" },
+    { label: t("Spent"), value: Math.min(spent, scale), max: scale, color: "var(--spending)" },
+    { label: t("Kept"), value: kept, max: scale, color: "#22c55e" },
   ];
   const change = data ? percentChange(spent, data.previous.spending) : null;
   const top = data?.categories[0];
@@ -426,7 +436,7 @@ function MonthRing({ data }: { data: Summary | undefined }) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>This month</CardTitle>
+        <CardTitle>{t("This month")}</CardTitle>
       </CardHeader>
       {/* Fills the card: the ring sits centred in the spare height, the insight at the bottom. */}
       <CardContent className="flex flex-1 flex-col gap-4">
@@ -437,34 +447,40 @@ function MonthRing({ data }: { data: Summary | undefined }) {
               <span className={cn("text-xl font-semibold tabular-nums", over > 0 && "text-destructive")}>
                 {saved === null ? "—" : <Percent value={saved} />}
               </span>
-              <span className="text-xs text-muted-foreground">saved</span>
+              <span className="text-xs text-muted-foreground">{t("saved")}</span>
             </div>
           </div>
           <div className="grid gap-2 text-sm">
             <Legend color="bg-[#22c55e]">
-              Kept <span className="font-semibold tabular-nums">{formatMoney(kept)}</span>
+              {t("Kept")} <span className="font-semibold tabular-nums">{formatMoney(kept)}</span>
             </Legend>
             <Legend color="bg-spending">
-              Spent <span className="font-semibold tabular-nums">{formatMoney(spent)}</span>
+              {t("Spent")} <span className="font-semibold tabular-nums">{formatMoney(spent)}</span>
             </Legend>
-            <span className="text-xs text-muted-foreground">of {formatMoney(income)} income</span>
-            {over > 0 && <span className="text-xs text-destructive">{formatMoney(over)} over income</span>}
+            <span className="text-xs text-muted-foreground">
+              {t("of {amount} income", { amount: formatMoney(income) })}
+            </span>
+            {over > 0 && (
+              <span className="text-xs text-destructive">
+                {t("{amount} over income", { amount: formatMoney(over) })}
+              </span>
+            )}
           </div>
         </div>
         {data && (change !== null || top) && (
           <p className="rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
             {change !== null && (
               <>
-                You're spending{" "}
+                {t("You're spending")}{" "}
                 <span className={change > 0 ? "text-destructive" : "text-emerald-500"}>
-                  {Math.abs(change)}% {change > 0 ? "more" : "less"}
+                  {Math.abs(change)}% {change > 0 ? t("more") : t("less")}
                 </span>{" "}
-                than {monthOnly.format(asDate(data.previous.month))}.{" "}
+                {t("than {month}.", { month: monthOnly(asDate(data.previous.month)) })}{" "}
               </>
             )}
             {top && (
               <>
-                <span className="text-foreground">{top.name}</span> is your biggest category.
+                <span className="text-foreground">{t(top.name)}</span> {t("is your biggest category.")}
               </>
             )}
           </p>

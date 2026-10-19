@@ -16,14 +16,22 @@ import {
 } from "@web/components/ui/dialog.tsx";
 import { Input } from "@web/components/ui/input.tsx";
 import { Label } from "@web/components/ui/label.tsx";
-import { api, type Category, type CategoryType, setToken, useCategories, useGuest } from "@web/lib/api.ts";
+import { api, type Category, type CategoryType, setToken, useCategories, useGuest, useStatus } from "@web/lib/api.ts";
+import { chooseLanguage, LANGUAGE_NAMES, type Language, t, useWantedLanguage } from "@web/lib/i18n.ts";
 import { CATEGORY_PALETTE, cn, setTheme, type ThemeChoice, useTheme } from "@web/lib/utils.ts";
 
+// Labels in English, translated when shown.
 const SECTIONS = [
   { id: "preferences", label: "Preferences" },
   { id: "categories", label: "Categories" },
   { id: "security", label: "Security" },
 ] as const;
+
+const THEME_LABELS: Record<ThemeChoice, () => string> = {
+  system: () => t("System"),
+  light: () => t("Light"),
+  dark: () => t("Dark"),
+};
 
 /** Matches the API: "Other" takes the transactions of deleted categories, so it stays. */
 const FALLBACK_CATEGORY = "Other";
@@ -36,9 +44,9 @@ export function Settings() {
     <div className="grid gap-6 md:grid-cols-[11rem_1fr] md:items-start">
       <div className="md:sticky md:top-8">
         <p className="mb-3 hidden text-sm text-muted-foreground md:block">
-          Manage your categories, preferences and account security.
+          {t("Manage your categories, preferences and account security.")}
         </p>
-        <nav className="flex gap-1 overflow-x-auto md:flex-col" aria-label="Settings sections">
+        <nav className="flex gap-1 overflow-x-auto md:flex-col" aria-label={t("Settings sections")}>
           {SECTIONS.map(({ id, label }) => (
             <a
               key={id}
@@ -59,7 +67,7 @@ export function Settings() {
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               )}
-              {label}
+              {t(label)}
             </a>
           ))}
         </nav>
@@ -157,34 +165,70 @@ function Message({ error, success }: { error: string | null; success?: string | 
 
 function Preferences() {
   const { choice } = useTheme();
+  const status = useStatus();
   return (
-    <Section id="preferences" title="Preferences">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="text-sm font-medium">Theme</div>
-          <div className="text-sm text-muted-foreground">Match your system or pick one.</div>
+    <Section id="preferences" title={t("Preferences")}>
+      <div className="grid gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-medium">{t("Theme")}</div>
+            <div className="text-sm text-muted-foreground">{t("Match your system or pick one.")}</div>
+          </div>
+          <div className="flex gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label={t("Theme")}>
+            {(["system", "light", "dark"] as ThemeChoice[]).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={choice === option}
+                onClick={() => setTheme(option)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-sm font-medium outline-none transition-colors",
+                  choice === option
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {THEME_LABELS[option]()}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label="Theme">
-          {(["system", "light", "dark"] as ThemeChoice[]).map((option) => (
-            <button
-              key={option}
-              type="button"
-              role="radio"
-              aria-checked={choice === option}
-              onClick={() => setTheme(option)}
-              className={cn(
-                "rounded-md px-3 py-1 text-sm font-medium capitalize outline-none transition-colors",
-                choice === option
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
+        {status.data?.plugins.includes("i18n") && <LanguageChoice />}
       </div>
     </Section>
+  );
+}
+
+/** This browser's language, offered by the i18n plugin. It follows the browser until one is picked. */
+function LanguageChoice() {
+  const language = useWantedLanguage();
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div className="text-sm font-medium">{t("Language")}</div>
+        <div className="text-sm text-muted-foreground">{t("Follows your browser until you pick one.")}</div>
+      </div>
+      <div className="flex gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label={t("Language")}>
+        {(Object.keys(LANGUAGE_NAMES) as Language[]).map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={language === option}
+            onClick={() => chooseLanguage(option)}
+            className={cn(
+              "rounded-md px-3 py-1 text-sm font-medium outline-none transition-colors",
+              language === option
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {LANGUAGE_NAMES[option]}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -195,8 +239,10 @@ function Categories() {
   return (
     <Section
       id="categories"
-      title="Categories"
-      description={`Rename or delete categories. Deleting one moves its transactions to "${FALLBACK_CATEGORY}".`}
+      title={t("Categories")}
+      description={t('Rename or delete categories. Deleting one moves its transactions to "{other}".', {
+        other: t(FALLBACK_CATEGORY),
+      })}
     >
       {categories.isError && <Message error={categories.error.message} />}
       <div className="grid gap-6 md:grid-cols-2 md:gap-0 md:divide-x">
@@ -232,9 +278,10 @@ function CategoryColumn({
   // Alphabetical, with the fallback last.
   const sorted = [...categories].sort(
     (a, b) =>
-      Number(a.name === FALLBACK_CATEGORY) - Number(b.name === FALLBACK_CATEGORY) || a.name.localeCompare(b.name),
+      Number(a.name === FALLBACK_CATEGORY) - Number(b.name === FALLBACK_CATEGORY) || t(a.name).localeCompare(t(b.name)),
   );
-  const label = type === "EXPENSE" ? "expense" : "income";
+  const label = type === "EXPENSE" ? t("Expense") : t("Income");
+  const placeholder = type === "EXPENSE" ? t("New expense category") : t("New income category");
 
   async function add(event: FormEvent) {
     event.preventDefault();
@@ -264,8 +311,8 @@ function CategoryColumn({
       {!readOnly && (
         <form onSubmit={add} className="flex gap-2">
           <Input
-            placeholder={`New ${label} category`}
-            aria-label={`New ${label} category`}
+            placeholder={placeholder}
+            aria-label={placeholder}
             maxLength={50}
             value={name}
             onChange={(e) => {
@@ -275,7 +322,7 @@ function CategoryColumn({
             required
           />
           <Button type="submit" variant="outline">
-            Add
+            {t("Add")}
           </Button>
         </form>
       )}
@@ -299,13 +346,16 @@ function CategoryRow({
   const [color, setColor] = useState(category.color);
   const [error, setError] = useState<string | null>(null);
   const fallback = category.name === FALLBACK_CATEGORY;
+  // Default categories are stored in English and shown translated; editing starts from what is shown.
+  const shown = t(category.name);
 
   async function save(event: FormEvent) {
     event.preventDefault();
     const trimmed = name.trim();
-    if (trimmed === category.name && color === category.color) return setEditing(false);
+    const renamed = trimmed !== shown;
+    if (!renamed && color === category.color) return setEditing(false);
     try {
-      await api.categories.update(category.id, { name: trimmed, color });
+      await api.categories.update(category.id, { name: renamed ? trimmed : category.name, color });
       await Promise.all([
         client.invalidateQueries({ queryKey: ["categories"] }),
         client.invalidateQueries({ queryKey: ["transactions"] }),
@@ -322,7 +372,7 @@ function CategoryRow({
         <div className="flex items-center gap-1">
           <span aria-hidden="true" className="size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           <Input
-            aria-label={`Rename ${category.name}`}
+            aria-label={t("Rename {name}", { name: shown })}
             className="h-8"
             maxLength={50}
             value={name}
@@ -339,21 +389,31 @@ function CategoryRow({
             autoFocus
             required
           />
-          <Button type="submit" variant="ghost" size="icon-sm" aria-label="Save category">
+          <Button type="submit" variant="ghost" size="icon-sm" aria-label={t("Save category")}>
             <Check />
           </Button>
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Cancel" onClick={() => setEditing(false)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("Cancel")}
+            onClick={() => setEditing(false)}
+          >
             <X />
           </Button>
         </div>
-        <div className="flex flex-wrap gap-1.5 px-1" role="radiogroup" aria-label={`Colour for ${category.name}`}>
+        <div
+          className="flex flex-wrap gap-1.5 px-1"
+          role="radiogroup"
+          aria-label={t("Colour for {name}", { name: shown })}
+        >
           {CATEGORY_PALETTE.map((option) => (
             <button
               key={option}
               type="button"
               role="radio"
               aria-checked={color === option}
-              aria-label={`Colour ${option}`}
+              aria-label={t("Colour {color}", { color: option })}
               onClick={() => setColor(option)}
               className={cn(
                 "size-5 rounded-full ring-offset-2 ring-offset-background transition-shadow",
@@ -371,19 +431,19 @@ function CategoryRow({
   return (
     <div className="group flex h-10 items-center gap-2 rounded-md px-2 hover:bg-muted/50">
       <span aria-hidden="true" className="size-3 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
-      <span className="flex-1 truncate text-sm">{category.name}</span>
+      <span className="flex-1 truncate text-sm">{shown}</span>
       {fallback ? (
-        <span className="flex size-7 items-center justify-center text-muted-foreground" title="Always kept">
-          <Lock className="size-3.5" aria-label="Always kept" />
+        <span className="flex size-7 items-center justify-center text-muted-foreground" title={t("Always kept")}>
+          <Lock className="size-3.5" aria-label={t("Always kept")} />
         </span>
       ) : readOnly ? null : (
         <div className="flex opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Rename ${category.name}`}
+            aria-label={t("Rename {name}", { name: shown })}
             onClick={() => {
-              setName(category.name);
+              setName(shown);
               setColor(category.color);
               setEditing(true);
             }}
@@ -394,7 +454,7 @@ function CategoryRow({
             variant="ghost"
             size="icon-sm"
             className="hover:text-destructive"
-            aria-label={`Delete ${category.name}`}
+            aria-label={t("Delete {name}", { name: shown })}
             onClick={onDelete}
           >
             <Trash2 />
@@ -432,20 +492,22 @@ function DeleteCategoryDialog({ category, onClose }: { category: Category | null
     <Dialog open={category !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Delete {category?.name}?</DialogTitle>
+          <DialogTitle>{t("Delete {name}?", { name: category ? t(category.name) : "" })}</DialogTitle>
           <DialogDescription>
             {count === 0
-              ? "No transactions use it."
-              : `Its ${count} transaction${count === 1 ? "" : "s"} move${count === 1 ? "s" : ""} to "${FALLBACK_CATEGORY}".`}
+              ? t("No transactions use it.")
+              : count === 1
+                ? t('Its 1 transaction moves to "{other}".', { other: t(FALLBACK_CATEGORY) })
+                : t('Its {count} transactions move to "{other}".', { count, other: t(FALLBACK_CATEGORY) })}
           </DialogDescription>
         </DialogHeader>
         <Message error={error} />
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">{t("Cancel")}</Button>
           </DialogClose>
           <Button variant="destructive" disabled={busy} onClick={() => void confirm()}>
-            Delete
+            {t("Delete")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -468,7 +530,7 @@ function Security() {
       await api.auth.changePassword(current, next);
       setCurrent("");
       setNext("");
-      setSuccess("Password changed. Other sessions were logged out.");
+      setSuccess(t("Password changed. Other sessions were logged out."));
     } catch (err) {
       setError(errorText(err));
     }
@@ -480,12 +542,12 @@ function Security() {
   }
 
   return (
-    <Section id="security" title="Security" description="One server password protects this CFlow.">
+    <Section id="security" title={t("Security")} description={t("One server password protects this CFlow.")}>
       <div className="grid gap-6">
         {!guest && (
           <form onSubmit={submit} className="grid max-w-sm gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="current-password">Current password</Label>
+              <Label htmlFor="current-password">{t("Current password")}</Label>
               <Input
                 id="current-password"
                 type="password"
@@ -496,7 +558,7 @@ function Security() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="new-password">New password</Label>
+              <Label htmlFor="new-password">{t("New password")}</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -509,17 +571,17 @@ function Security() {
             </div>
             <Message error={error} success={success} />
             <Button type="submit" className="justify-self-start">
-              Change password
+              {t("Change password")}
             </Button>
           </form>
         )}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-6">
           <div>
-            <div className="text-sm font-medium">Log out</div>
-            <div className="text-sm text-muted-foreground">End this session on this device.</div>
+            <div className="text-sm font-medium">{t("Log out")}</div>
+            <div className="text-sm text-muted-foreground">{t("End this session on this device.")}</div>
           </div>
           <Button variant="outline" onClick={() => void logout()}>
-            <LogOut /> Log out
+            <LogOut /> {t("Log out")}
           </Button>
         </div>
       </div>

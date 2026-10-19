@@ -18,6 +18,7 @@ import {
 } from "@web/components/ui/select.tsx";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@web/components/ui/table.tsx";
 import { type CategoryType, type Transaction, useCategories, useGuest, useTransactions } from "@web/lib/api.ts";
+import { t } from "@web/lib/i18n.ts";
 import { cn, formatDate, formatMoney } from "@web/lib/utils.ts";
 
 type TypeFilter = "ALL" | CategoryType;
@@ -64,10 +65,10 @@ export function Transactions() {
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-3xl font-semibold tracking-tight">Transactions</h2>
+        <h2 className="text-3xl font-semibold tracking-tight">{t("Transactions")}</h2>
         {!guest && (
           <Button onClick={() => openDialog()}>
-            <Plus /> Add
+            <Plus /> {t("Add")}
           </Button>
         )}
       </div>
@@ -84,8 +85,8 @@ export function Transactions() {
               <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <Input
                 className="pl-8"
-                placeholder="Search"
-                aria-label="Search"
+                placeholder={t("Search")}
+                aria-label={t("Search")}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -104,13 +105,13 @@ export function Transactions() {
                 if (next !== "ALL" && chosen && chosen.type !== next) setCategory("ALL");
               }}
             >
-              <SelectTrigger className="w-32" aria-label="Type">
+              <SelectTrigger className="w-32" aria-label={t("Type")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All</SelectItem>
-                <SelectItem value="EXPENSE">Expenses</SelectItem>
-                <SelectItem value="INCOME">Income</SelectItem>
+                <SelectItem value="ALL">{t("All")}</SelectItem>
+                <SelectItem value="EXPENSE">{t("Expenses")}</SelectItem>
+                <SelectItem value="INCOME">{t("Income")}</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -120,20 +121,20 @@ export function Transactions() {
                 setPage(0);
               }}
             >
-              <SelectTrigger className="w-40" aria-label="Category">
+              <SelectTrigger className="w-44" aria-label={t("Category")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All categories</SelectItem>
+                <SelectItem value="ALL">{t("All categories")}</SelectItem>
                 {(["EXPENSE", "INCOME"] as const).map((group) =>
                   type !== "ALL" && type !== group ? null : (
                     <SelectGroup key={group}>
-                      <SelectLabel>{group === "EXPENSE" ? "Expense" : "Income"}</SelectLabel>
+                      <SelectLabel>{group === "EXPENSE" ? t("Expense") : t("Income")}</SelectLabel>
                       {categoryOptions
                         .filter((c) => c.type === group)
                         .map((c) => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.name}
+                            {t(c.name)}
                           </SelectItem>
                         ))}
                     </SelectGroup>
@@ -142,7 +143,7 @@ export function Transactions() {
               </SelectContent>
             </Select>
             <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-              Rows
+              {t("Rows")}
               <Select
                 value={String(size)}
                 onValueChange={(value) => {
@@ -150,7 +151,7 @@ export function Transactions() {
                   setPage(0);
                 }}
               >
-                <SelectTrigger size="sm" className="w-18" aria-label="Rows per page">
+                <SelectTrigger size="sm" className="w-18" aria-label={t("Rows per page")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -168,45 +169,47 @@ export function Transactions() {
             {content.length === 0 ? (
               list.isPending ? null : (
                 <p className="py-12 text-center text-sm text-muted-foreground">
-                  {filtered ? "No matching transactions." : "No transactions yet."}
+                  {filtered ? t("No matching transactions.") : t("No transactions yet.")}
                 </p>
               )
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="hidden w-32 sm:table-cell">Date</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="hidden sm:table-cell">Category</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="hidden w-32 sm:table-cell">{t("Date")}</TableHead>
+                    <TableHead>{t("Title")}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t("Category")}</TableHead>
+                    <TableHead className="text-right">{t("Amount")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {content.map((t) => (
+                  {content.map((tx) => (
                     <TableRow
-                      key={t.id}
+                      key={tx.id}
                       tabIndex={0}
                       className="cursor-pointer odd:bg-muted/40 hover:bg-muted/80 focus-visible:bg-muted/80 focus-visible:outline-none"
-                      onClick={() => openDialog(t)}
+                      onClick={() => openDialog(tx)}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
-                          openDialog(t);
+                          openDialog(tx);
                         }
                       }}
                     >
-                      <TableCell className="hidden text-muted-foreground sm:table-cell">{formatDate(t.date)}</TableCell>
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
+                        {formatDate(tx.date)}
+                      </TableCell>
                       <TableCell className="font-medium">
-                        {t.title}
+                        {tx.title}
                         {/* On phones the date column is hidden; it shows under the title instead. */}
-                        <div className="text-xs font-normal text-muted-foreground sm:hidden">{formatDate(t.date)}</div>
+                        <div className="text-xs font-normal text-muted-foreground sm:hidden">{formatDate(tx.date)}</div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="secondary">{t.category.name}</Badge>
+                        <Badge variant="secondary">{t(tx.category.name)}</Badge>
                       </TableCell>
-                      <TableCell className={cn("text-right font-medium tabular-nums", t.amount > 0 && "text-income")}>
-                        {t.amount > 0 ? "+" : ""}
-                        {formatMoney(t.amount)}
+                      <TableCell className={cn("text-right font-medium tabular-nums", tx.amount > 0 && "text-income")}>
+                        {tx.amount > 0 ? "+" : ""}
+                        {formatMoney(tx.amount)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -219,7 +222,7 @@ export function Transactions() {
           {content.length > 0 && (
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t px-4 pt-3 pb-1 text-sm text-muted-foreground">
               <span className="tabular-nums">
-                {page * size + 1}–{Math.min((page + 1) * size, total)} of {total}
+                {t("{from}–{to} of {total}", { from: page * size + 1, to: Math.min((page + 1) * size, total), total })}
               </span>
               <Pagination page={page} totalPages={totalPages} onPage={goTo} />
             </div>
@@ -251,8 +254,14 @@ function Pagination({
   if (totalPages <= 1) return null;
   const last = totalPages - 1;
   return (
-    <nav className="ml-auto flex items-center gap-1" aria-label="Pages">
-      <Button variant="ghost" size="icon-sm" disabled={page === 0} onClick={() => onPage(0)} aria-label="First page">
+    <nav className="ml-auto flex items-center gap-1" aria-label={t("Pages")}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        disabled={page === 0}
+        onClick={() => onPage(0)}
+        aria-label={t("First page")}
+      >
         <ChevronsLeft />
       </Button>
       <Button
@@ -260,7 +269,7 @@ function Pagination({
         size="icon-sm"
         disabled={page === 0}
         onClick={() => onPage(page - 1)}
-        aria-label="Previous page"
+        aria-label={t("Previous page")}
       >
         <ChevronLeft />
       </Button>
@@ -310,7 +319,7 @@ function Pagination({
         size="icon-sm"
         disabled={page === last}
         onClick={() => onPage(page + 1)}
-        aria-label="Next page"
+        aria-label={t("Next page")}
       >
         <ChevronRight />
       </Button>
@@ -319,7 +328,7 @@ function Pagination({
         size="icon-sm"
         disabled={page === last}
         onClick={() => onPage(last)}
-        aria-label="Last page"
+        aria-label={t("Last page")}
       >
         <ChevronsRight />
       </Button>

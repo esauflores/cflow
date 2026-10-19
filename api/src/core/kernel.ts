@@ -8,15 +8,17 @@ export interface Mount {
   path: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any Hono app is accepted
   app: Hono<any, any, any>;
+  /** Served without a session: only for data that is no secret, such as translations. */
+  public: boolean;
 }
 
-/** Collects the routes plugins register during setup; `app.ts` mounts them under /api, behind auth. */
+/** Collects the routes plugins register during setup; `app.ts` mounts them under /api, behind auth unless public. */
 export class Routes {
   readonly #mounts: Mount[] = [];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any Hono app is accepted
-  mount(path: string, app: Hono<any, any, any>): void {
-    this.#mounts.push({ path, app });
+  mount(path: string, app: Hono<any, any, any>, options: { public?: boolean } = {}): void {
+    this.#mounts.push({ path, app, public: options.public ?? false });
   }
 
   get mounts(): readonly Mount[] {

@@ -71,7 +71,7 @@ export async function bootstrap(deps: Deps, password: string) {
 export async function login(deps: Deps, password: string) {
   const hash = await storedHash(deps.db);
   if (!hash) throw conflict("The server has not been set up yet");
-  if (!(await verifyPassword(password, hash))) throw unauthorized("Invalid password", "INVALID_CREDENTIALS");
+  if (!(await verifyPassword(password, hash))) throw unauthorized("Invalid password", { code: "INVALID_CREDENTIALS" });
   return createSession(deps, "owner");
 }
 
@@ -88,7 +88,7 @@ export async function logout(db: Client, tokenHash: string): Promise<void> {
 export async function changePassword(deps: Deps, tokenHash: string, current: string, next: string): Promise<void> {
   const hash = await storedHash(deps.db);
   if (!hash || !(await verifyPassword(current, hash))) {
-    throw unauthorized("Current password is incorrect", "INVALID_CREDENTIALS");
+    throw unauthorized("Current password is incorrect", { code: "INVALID_CREDENTIALS" });
   }
   const nextHash = await hashPassword(next);
   await deps.db.batch(

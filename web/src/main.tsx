@@ -5,6 +5,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
 import { type RouteHandle, Shell } from "@web/components/Shell.tsx";
 import { createQueryClient } from "@web/lib/api.ts";
+import { useLanguage } from "@web/lib/i18n.ts";
 import { Dashboard } from "@web/pages/Dashboard.tsx";
 import { AuthGate } from "@web/pages/Login.tsx";
 import { Settings } from "@web/pages/Settings.tsx";
@@ -25,12 +26,20 @@ const router = createBrowserRouter([
   },
 ]);
 
+/** The app, rebuilt when the language changes so every label is looked up again. */
+function App() {
+  const language = useLanguage();
+  return (
+    <AuthGate key={language}>
+      <RouterProvider router={router} />
+    </AuthGate>
+  );
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={createQueryClient()}>
-      <AuthGate>
-        <RouterProvider router={router} />
-      </AuthGate>
+      <App />
     </QueryClientProvider>
   </StrictMode>,
 );

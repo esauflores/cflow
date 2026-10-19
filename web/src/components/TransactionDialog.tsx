@@ -9,6 +9,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "@web/components
 import { Input } from "@web/components/ui/input.tsx";
 import { Label } from "@web/components/ui/label.tsx";
 import { api, type CategoryType, type Transaction, useCategories, useInvalidateLedger } from "@web/lib/api.ts";
+import { t } from "@web/lib/i18n.ts";
 import { cn, dayBefore, today } from "@web/lib/utils.ts";
 
 /** Categories shown before "More…": two rows of four. */
@@ -135,11 +136,11 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
     if (status !== "idle") return;
     const value = Number(amount);
     if (!(value > 0)) {
-      setError("Enter an amount above 0");
+      setError(t("Enter an amount above 0"));
       return;
     }
     if (!categoryId) {
-      setError("Choose a category");
+      setError(t("Choose a category"));
       return;
     }
     const input = {
@@ -151,14 +152,14 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
     void run(() => (transaction ? api.transactions.update(transaction.id, input) : api.transactions.create(input)));
   }
 
-  const saveLabel = transaction ? "Save" : type === "EXPENSE" ? "Add expense" : "Add income";
+  const saveLabel = transaction ? t("Save") : type === "EXPENSE" ? t("Add expense") : t("Add income");
 
   return (
     <form ref={formRef} onSubmit={submit} className="grid">
       <div className="grid gap-6 p-6">
-        <DialogTitle>{transaction ? "Edit transaction" : "New transaction"}</DialogTitle>
+        <DialogTitle>{transaction ? t("Edit transaction") : t("New transaction")}</DialogTitle>
 
-        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label="Type">
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label={t("Type")}>
           {(["EXPENSE", "INCOME"] as const).map((option) => (
             <button
               key={option}
@@ -176,7 +177,7 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
             >
               <span className="flex items-center gap-1.5">
                 {option === "EXPENSE" ? <ArrowDown className="size-3.5" /> : <ArrowUp className="size-3.5" />}
-                {option === "EXPENSE" ? "Expense" : "Income"}
+                {option === "EXPENSE" ? t("Expense") : t("Income")}
               </span>
             </button>
           ))}
@@ -184,7 +185,7 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
 
         <div className="grid justify-items-center gap-1">
           <Label htmlFor="amount" className="text-xs font-normal text-muted-foreground">
-            Amount
+            {t("Amount")}
           </Label>
           <div className={cn("flex items-baseline gap-1 border-b-2 border-current px-2", tone.text)}>
             <span className="text-2xl font-semibold">{type === "EXPENSE" ? "−$" : "+$"}</span>
@@ -212,11 +213,11 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="title">What was it for?</Label>
+          <Label htmlFor="title">{t("What was it for?")}</Label>
           <Input
             id="title"
             maxLength={50}
-            placeholder={type === "EXPENSE" ? "e.g. Groceries at the market" : "e.g. October salary"}
+            placeholder={type === "EXPENSE" ? t("e.g. Groceries at the market") : t("e.g. October salary")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -225,12 +226,12 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
 
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Category</span>
+            <span className="text-sm font-medium">{t("Category")}</span>
             <Link to="/settings" onClick={onDone} className="text-xs font-medium text-primary hover:underline">
-              Manage
+              {t("Manage")}
             </Link>
           </div>
-          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Category">
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={t("Category")}>
             {visibleCategories.map((c) => (
               <Chip
                 key={c.id}
@@ -241,7 +242,7 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
                   setError(null);
                 }}
               >
-                {c.name}
+                {t(c.name)}
               </Chip>
             ))}
             {collapsed && (
@@ -250,20 +251,20 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
                 onClick={() => setShowAllCategories(true)}
                 className="h-9 rounded-lg border border-dashed px-2 text-sm font-medium text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:border-ring"
               >
-                More…
+                {t("More…")}
               </button>
             )}
           </div>
         </div>
 
         <div className="grid gap-2">
-          <span className="text-sm font-medium">Date</span>
+          <span className="text-sm font-medium">{t("Date")}</span>
           <div className="flex gap-2">
             <Chip selected={date === todayValue} selectedClass={tone.chip} onClick={() => setDate(todayValue)}>
-              Today
+              {t("Today")}
             </Chip>
             <Chip selected={date === yesterday} selectedClass={tone.chip} onClick={() => setDate(yesterday)}>
-              Yesterday
+              {t("Yesterday")}
             </Chip>
             <DatePicker
               id="date"
@@ -296,17 +297,17 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
           >
             <Trash2 />
             <SwapLabel id={confirmingDelete ? "confirm" : "delete"}>
-              {confirmingDelete ? "Confirm delete" : "Delete"}
+              {confirmingDelete ? t("Confirm delete") : t("Delete")}
             </SwapLabel>
           </Button>
         ) : (
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            Press <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> to save
+            {t("Press")} <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> {t("to save")}
           </span>
         )}
         <DialogClose asChild>
           <Button type="button" variant="outline" className="ml-auto">
-            Cancel
+            {t("Cancel")}
           </Button>
         </DialogClose>
         <Button type="submit" className="min-w-28" disabled={status !== "idle"}>

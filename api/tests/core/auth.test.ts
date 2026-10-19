@@ -5,14 +5,22 @@ import { PASSWORD, setup } from "../support/helpers.ts";
 describe("auth", () => {
   it("reports and performs first-run setup once", async () => {
     const h = await setup({ bootstrap: false });
-    expect(await h.data("GET", "/api/auth/status")).toEqual({ bootstrapped: false, allowGuest: false });
+    expect(await h.data("GET", "/api/auth/status")).toEqual({
+      bootstrapped: false,
+      allowGuest: false,
+      plugins: ["core"],
+    });
 
     const short = await h.request("POST", "/api/auth/bootstrap", { password: "short" });
     expect(short.status).toBe(400);
 
     const created = await h.request("POST", "/api/auth/bootstrap", { password: PASSWORD });
     expect(created.status).toBe(201);
-    expect(await h.data("GET", "/api/auth/status")).toEqual({ bootstrapped: true, allowGuest: false });
+    expect(await h.data("GET", "/api/auth/status")).toEqual({
+      bootstrapped: true,
+      allowGuest: false,
+      plugins: ["core"],
+    });
 
     const again = await h.request("POST", "/api/auth/bootstrap", { password: PASSWORD });
     expect(again.status).toBe(409);

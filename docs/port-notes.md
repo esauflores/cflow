@@ -22,8 +22,8 @@ CFlow started as a port of the [BFlow Financial Engine](https://github.com/Diazz
   you can delete. The `Idempotency-Key` header and its table are gone.
 - **A slimmer envelope.** Successful responses are `{ success, data }`, without the original
   `message`, `timestamp` and `path`; errors keep them. Deletes return 204 with no body.
-- **English only.** Messages and chart labels are in English; there is no localisation until it is
-  needed.
+- **English, plus Spanish as a plugin.** The original had no translations; the `i18n` plugin adds
+  Spanish for the whole web app.
 
 ## Not yet ported
 

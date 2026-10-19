@@ -2,6 +2,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { Button, buttonVariants } from "@web/components/ui/button.tsx";
+import { locale, t } from "@web/lib/i18n.ts";
 import { cn } from "@web/lib/utils.ts";
 
 // A single-date calendar that replaces react-day-picker. It keeps the shadcn
@@ -10,9 +11,19 @@ import { cn } from "@web/lib/utils.ts";
 // or week, Home/End to the week's ends, PageUp/PageDown by month and with Shift
 // by year. Disabled days are skipped when moving.
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const caption = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
-const dayLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+// Formats in the current language, made when used so they follow a language change.
+const caption = {
+  format: (date: Date) => new Intl.DateTimeFormat(locale(), { month: "long", year: "numeric" }).format(date),
+};
+const dayLabel = {
+  format: (date: Date) =>
+    new Intl.DateTimeFormat(locale(), { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(date),
+};
+/** "Su" … "Sa" (or "do" … "sá"), Sunday first: Jan 4, 2026 is a Sunday. */
+const weekdays = () =>
+  Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(locale(), { weekday: "short" }).format(new Date(2026, 0, 4 + i)).slice(0, 2),
+  );
 
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
@@ -119,7 +130,7 @@ function Calendar({
           <button
             type="button"
             className={cn(buttonVariants({ variant: "ghost" }), navButton)}
-            aria-label="Go to the Previous Month"
+            aria-label={t("Go to the Previous Month")}
             onClick={() => setMonth(addMonths(month, -1))}
           >
             <ChevronLeftIcon className="size-4" />
@@ -127,7 +138,7 @@ function Calendar({
           <button
             type="button"
             className={cn(buttonVariants({ variant: "ghost" }), navButton)}
-            aria-label="Go to the Next Month"
+            aria-label={t("Go to the Next Month")}
             aria-disabled={nextDisabled || undefined}
             onClick={() => !nextDisabled && setMonth(addMonths(month, 1))}
           >
@@ -143,7 +154,7 @@ function Calendar({
           <table ref={grid} role="grid" aria-label={caption.format(month)} className="w-full border-collapse">
             <thead aria-hidden>
               <tr className="flex">
-                {WEEKDAYS.map((weekday) => (
+                {weekdays().map((weekday) => (
                   <th
                     key={weekday}
                     scope="col"
@@ -188,7 +199,7 @@ function Calendar({
                           data-selected-single={isSelected || undefined}
                           tabIndex={sameDay(day, tabbable) ? 0 : -1}
                           disabled={disabled}
-                          aria-label={`${isToday ? "Today, " : ""}${dayLabel.format(day)}${isSelected ? ", selected" : ""}`}
+                          aria-label={`${isToday ? `${t("Today")}, ` : ""}${dayLabel.format(day)}${isSelected ? `, ${t("selected")}` : ""}`}
                           onClick={() => onSelect(day)}
                           onFocus={() => setFocused(day)}
                           onBlur={(event) => {

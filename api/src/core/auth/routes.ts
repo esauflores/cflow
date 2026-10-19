@@ -107,6 +107,8 @@ export function authRoutes(deps: Deps) {
       ok(c, {
         bootstrapped: await auth.isBootstrapped(deps.db),
         allowGuest: deps.config.allowGuest,
+        // Enabled plugins, so the web app can offer what they add (e.g. a language choice).
+        plugins: deps.config.plugins,
       }),
     )
     .post("/bootstrap", validate("json", z.object({ password })), async (c) => {

@@ -38,11 +38,11 @@ export function money(options: { min?: Cents; max?: Cents; signed?: boolean } = 
       return z.NEVER;
     }
     if (cents < min) {
-      ctx.addIssue({ code: "custom", message: `Amount must be at least ${toAmount(min)}` });
+      ctx.addIssue({ code: "custom", message: "Amount must be at least {min}", params: { min: toAmount(min) } });
       return z.NEVER;
     }
     if (cents > max) {
-      ctx.addIssue({ code: "custom", message: `Amount must not exceed ${toAmount(max)}` });
+      ctx.addIssue({ code: "custom", message: "Amount must not exceed {max}", params: { max: toAmount(max) } });
       return z.NEVER;
     }
     return negative ? -cents : cents;

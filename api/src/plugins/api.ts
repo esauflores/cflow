@@ -33,6 +33,9 @@ export interface CflowServices extends KernelServices {
   ledger: LedgerFacade;
 }
 
+/** The response envelope and request validation, so plugin routes answer like core ones. */
+export { ok, validate } from "@api/core/http.ts";
+
 export type CflowPlugin<Options = any, Input = Options> = Plugin<Options, CflowHooks, CflowServices, Input>;
 
 /** @public For plugin packages: `definePlugin({ name, setup, … })`. */

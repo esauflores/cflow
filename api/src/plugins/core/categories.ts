@@ -66,9 +66,9 @@ export async function requireCategoryFor(ex: Executor, id: string, amount: Cents
   if (!category) throw notFound("Category not found");
   const type = typeOf(amount);
   if (category.type !== type) {
-    throw badRequest(
-      `An ${type === "EXPENSE" ? "outflow" : "inflow"} needs an ${type} category, but "${category.name}" is ${category.type}`,
-    );
+    throw badRequest('This needs an {type} category, but "{name}" is an {actual} category', {
+      params: { type: type.toLowerCase(), name: category.name, actual: category.type.toLowerCase() },
+    });
   }
   return category;
 }
@@ -105,9 +105,11 @@ async function requireCategory(ex: Executor, id: string): Promise<Category> {
   return category;
 }
 
-function requireNotFallback(category: Category, action: string) {
+function requireNotFallback(category: Category, action: "renamed" | "deleted") {
   if (category.name === FALLBACK_CATEGORY) {
-    throw badRequest(`"${FALLBACK_CATEGORY}" can't be ${action}: it takes the transactions of deleted categories`);
+    throw badRequest(`"{name}" can't be {action}: it takes the transactions of deleted categories`, {
+      params: { name: FALLBACK_CATEGORY, action },
+    });
   }
 }
 
@@ -116,7 +118,11 @@ async function requireUniqueName(ex: Executor, name: string, type: CategoryType,
     sql: "SELECT 1 FROM categories WHERE type = ? AND lower(name) = lower(?) AND id <> ?",
     args: [type, name, exceptId],
   });
-  if (taken) throw conflict(`There is already an ${type.toLowerCase()} category named "${name}"`);
+  if (taken) {
+    throw conflict('There is already an {type} category named "{name}"', {
+      params: { type: type.toLowerCase(), name },
+    });
+  }
 }
 
 /** The first palette colour that type isn't using yet, so new categories stay distinct. */
@@ -158,7 +164,9 @@ export async function deleteCategory(client: Client, id: string): Promise<{ move
     args: [category.type, FALLBACK_CATEGORY],
   });
   if (!fallback)
-    throw conflict(`No "${FALLBACK_CATEGORY}" ${category.type.toLowerCase()} category to move transactions to`);
+    throw conflict('No "{name}" {type} category to move transactions to', {
+      params: { name: FALLBACK_CATEGORY, type: category.type.toLowerCase() },
+    });
   const [moved] = await client.batch(
     [
       { sql: "UPDATE transactions SET category_id = ? WHERE category_id = ?", args: [fallback.id, id] },

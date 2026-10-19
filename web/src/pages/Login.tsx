@@ -7,15 +7,18 @@ import { Button } from "@web/components/ui/button.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@web/components/ui/card.tsx";
 import { Input } from "@web/components/ui/input.tsx";
 import { Label } from "@web/components/ui/label.tsx";
-import { api, setGuest, setToken, useToken } from "@web/lib/api.ts";
+import { api, setGuest, setToken, useLanguageSync, useToken } from "@web/lib/api.ts";
+import { t } from "@web/lib/i18n.ts";
 
 /**
  * Shows first-run setup or login until there is a session, then the app.
- * Like Actual Budget, one server password protects the whole instance.
+ * One server password protects the whole instance.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
   const token = useToken();
   const status = useQuery({ queryKey: ["auth-status"], queryFn: api.auth.status, enabled: !token });
+  // From the login screen on: the browser's language, or the one picked in Settings.
+  useLanguageSync();
 
   if (token) return children;
   // One screen for "checking the server" and the form, so the logo mounts (and draws) once instead of
@@ -45,7 +48,7 @@ function PasswordForm({ setup, allowGuest }: { setup: boolean; allowGuest: boole
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (setup && password !== confirm) {
-      setError("Passwords do not match");
+      setError(t("Passwords do not match"));
       return;
     }
     setBusy(true);
@@ -85,15 +88,17 @@ function PasswordForm({ setup, allowGuest }: { setup: boolean; allowGuest: boole
       >
         <Card>
           <CardHeader>
-            <CardTitle>{setup ? "Set up CFlow" : "Welcome back"}</CardTitle>
+            <CardTitle>{setup ? t("Set up CFlow") : t("Welcome back")}</CardTitle>
             <CardDescription>
-              {setup ? "Choose the password that protects this server." : "Enter the server password to continue."}
+              {setup
+                ? t("Choose the password that protects this server.")
+                : t("Enter the server password to continue.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={submit} className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("Password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -107,7 +112,7 @@ function PasswordForm({ setup, allowGuest }: { setup: boolean; allowGuest: boole
               </div>
               {setup && (
                 <div className="grid gap-2">
-                  <Label htmlFor="confirm">Confirm password</Label>
+                  <Label htmlFor="confirm">{t("Confirm password")}</Label>
                   <Input
                     id="confirm"
                     type="password"
@@ -124,11 +129,11 @@ function PasswordForm({ setup, allowGuest }: { setup: boolean; allowGuest: boole
                 </p>
               )}
               <Button type="submit" disabled={busy}>
-                {setup ? "Create server password" : "Log in"}
+                {setup ? t("Create server password") : t("Log in")}
               </Button>
               {allowGuest && !setup && (
                 <Button type="button" variant="outline" disabled={busy} onClick={() => void enterAsGuest()}>
-                  Enter as guest
+                  {t("Enter as guest")}
                 </Button>
               )}
             </form>

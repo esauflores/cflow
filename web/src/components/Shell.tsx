@@ -5,15 +5,17 @@ import { NavLink, useLocation, useMatches, useOutlet } from "react-router";
 
 import { Logo } from "@web/components/Logo.tsx";
 import { api, setToken } from "@web/lib/api.ts";
+import { t } from "@web/lib/i18n.ts";
 import { cn } from "@web/lib/utils.ts";
 
+// Labels are looked up when rendered, so they follow the language.
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", label: () => t("Dashboard"), icon: LayoutDashboard },
+  { to: "/transactions", label: () => t("Transactions"), icon: ArrowLeftRight },
+  { to: "/settings", label: () => t("Settings"), icon: Settings },
 ];
 
-/** Each route names its document title through `handle: { title }`. */
+/** Each route names its document title through `handle: { title }`, in English; it is translated when shown. */
 export interface RouteHandle {
   title: string;
 }
@@ -54,7 +56,8 @@ function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: t
 export function Shell() {
   const location = useLocation();
   const outlet = useOutlet();
-  const title = (useMatches().at(-1)?.handle as RouteHandle | undefined)?.title;
+  const handleTitle = (useMatches().at(-1)?.handle as RouteHandle | undefined)?.title;
+  const title = handleTitle && t(handleTitle);
 
   // The tab is just the route's name; back to the app name when the shell unmounts.
   useEffect(() => {
@@ -79,21 +82,21 @@ export function Shell() {
             <Logo draw className="size-7" />
             <span className="text-lg font-semibold tracking-tight">CFlow</span>
           </div>
-          <div className="mt-1 text-sm text-muted-foreground">Personal finance</div>
+          <div className="mt-1 text-sm text-muted-foreground">{t("Personal finance")}</div>
         </div>
         <nav className="flex flex-1 gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {NAV.map((item) => (
-            <NavItem key={item.to} {...item} />
+            <NavItem key={item.to} to={item.to} label={item.label()} icon={item.icon} />
           ))}
         </nav>
         <button
           type="button"
           onClick={() => void logout()}
-          title="Log out"
+          title={t("Log out")}
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium whitespace-nowrap text-foreground/80 outline-none transition-colors hover:bg-accent/60 focus-visible:bg-accent/60"
         >
           <LogOut className="size-4" aria-hidden />
-          <span className="sr-only md:not-sr-only">Log out</span>
+          <span className="sr-only md:not-sr-only">{t("Log out")}</span>
         </button>
       </aside>
 

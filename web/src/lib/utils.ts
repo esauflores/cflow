@@ -2,26 +2,27 @@ import { type ClassValue, clsx } from "clsx";
 import { useSyncExternalStore } from "react";
 import { twMerge } from "tailwind-merge";
 
+import { locale, t } from "@web/lib/i18n.ts";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const dateFormat = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 /** "$1,234.50", or "−$4.50" for a negative amount. */
 export function formatMoney(amount: number): string {
+  const currency = new Intl.NumberFormat(locale(), { style: "currency", currency: "USD" });
   return `${amount < 0 ? "−" : ""}${currency.format(Math.abs(amount))}`;
 }
 
-/** A `YYYY-MM-DD` date as "Mar 15, 2026". */
+/** A `YYYY-MM-DD` date as "Mar 15, 2026" (or "15 mar 2026"). */
 export function formatDate(value: string): string {
-  return dateFormat.format(new Date(`${value}T00:00:00Z`));
+  const format = new Intl.DateTimeFormat(locale(), {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  return format.format(new Date(`${value}T00:00:00Z`));
 }
 
 /** Today in the browser's time zone as `YYYY-MM-DD`. */
@@ -64,9 +65,9 @@ export function dayBefore(value: string): string {
 
 /** "Good morning", "Good afternoon" or "Good evening" for the browser's clock. */
 export function greeting(hour = new Date().getHours()): string {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return t("Good morning");
+  if (hour < 18) return t("Good afternoon");
+  return t("Good evening");
 }
 
 /** Change from `previous` to `current` in percent, or null when there is nothing to compare with. */

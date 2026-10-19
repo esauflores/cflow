@@ -60,7 +60,10 @@ export async function startCflow(options: CflowOptions) {
   return { host, deps, app: createApp(deps, routes) };
 }
 
-/** Mounts the kernel's auth routes, then every route plugins registered under /api, behind the session check. */
+/**
+ * Mounts the kernel's auth routes, then every route plugins registered under /api: public ones as they are,
+ * the rest behind the session check.
+ */
 function createApp(deps: Deps, routes: Routes) {
   const app = new Hono();
   app.onError(onError);
@@ -68,12 +71,13 @@ function createApp(deps: Deps, routes: Routes) {
 
   app.get("/health", (c) => c.json({ status: "ok" }));
   app.route("/api/auth", authRoutes(deps));
+  for (const mount of routes.mounts) if (mount.public) app.route(`/api${mount.path}`, mount.app);
 
   const api = new Hono<AuthEnv>();
   api.use("*", requireSession(deps));
   // Reads are open to guests; every write under /api needs the owner session.
   api.use("*", blockGuestWrites);
-  for (const mount of routes.mounts) api.route(mount.path, mount.app);
+  for (const mount of routes.mounts) if (!mount.public) api.route(mount.path, mount.app);
   app.route("/api", api);
 
   return app;
