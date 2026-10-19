@@ -118,8 +118,13 @@ export async function listTransactions(
   if (filter.query) {
     // Title or category name; and when the query reads as a number ("$1,200", "-35.5"), the amount too,
     // compared as text without sign so "135" also finds $135.77.
-    const text = `%${filter.query.trim().toLowerCase()}%`;
-    const matches = ["lower(t.title) LIKE ?", "lower(c.name) LIKE ?"];
+    // `%` and `_` are LIKE wildcards; escape them (and the escape character) so they match literally.
+    const literal = filter.query
+      .trim()
+      .toLowerCase()
+      .replace(/[\\%_]/g, "\\$&");
+    const text = `%${literal}%`;
+    const matches = ["lower(t.title) LIKE ? ESCAPE '\\'", "lower(c.name) LIKE ? ESCAPE '\\'"];
     args.push(text, text);
     const number = filter.query.replace(/[\s$,+\-−]/g, "");
     if (/^\d+(\.\d{0,2})?$/.test(number)) {

@@ -94,6 +94,19 @@ describe("transactions", () => {
     expect(paged.content.map((t: { amount: number }) => t.amount)).toEqual([-30, -50]);
   });
 
+  it("searches for % and _ literally, not as wildcards", async () => {
+    const h = await setup();
+    const shopping = await categoryId(h, "Shopping", "EXPENSE");
+    await h.data("POST", "/api/transactions", txBody(shopping, { title: "50% off" }));
+    await h.data("POST", "/api/transactions", txBody(shopping, { title: "500 apples" }));
+    const search = async (q: string) =>
+      (await h.data("GET", `/api/transactions?query=${encodeURIComponent(q)}`)).content.map(
+        (t: { title: string }) => t.title,
+      );
+    expect(await search("50%")).toEqual(["50% off"]);
+    expect(await search("_")).toEqual([]);
+  });
+
   it("summarises a month: closing balance, totals, its year and spending by category", async () => {
     const h = await setup();
     const salary = await categoryId(h, "Salary", "INCOME");
