@@ -71,7 +71,9 @@ export function Shell() {
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="isolate flex items-center gap-2 border-b bg-sidebar p-3 md:sticky md:top-0 md:h-screen md:w-52 md:flex-col md:items-stretch md:gap-6 md:border-r md:border-b-0 md:py-5">
+      {/* Fixed, not sticky: a sticky sidebar is re-placed on every scroll frame, and at fractional scroll
+          positions (smooth scrolling, display scaling) its logo and links snap up and down by a pixel. */}
+      <aside className="isolate z-20 flex items-center gap-2 border-b bg-sidebar p-3 md:fixed md:inset-y-0 md:left-0 md:w-52 md:flex-col md:items-stretch md:gap-6 md:border-r md:border-b-0 md:py-5">
         <div className="hidden px-3 py-1 md:block">
           <div className="flex items-center gap-2">
             <Logo draw className="size-7" />
@@ -95,7 +97,7 @@ export function Shell() {
         </button>
       </aside>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 md:pl-52">
         <main className="relative mx-auto w-full max-w-6xl p-4 md:p-8">
           {/* No initial={false} here: it would also switch off the entrance animations of everything inside the page. */}
           {/* popLayout: the new page fades in while the old one fades out on top, instead of waiting for it. */}
