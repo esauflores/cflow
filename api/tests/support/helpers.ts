@@ -37,9 +37,10 @@ export async function setup(
   options: {
     now?: string;
     bootstrap?: boolean;
-    plugins?: readonly (CflowPlugin | readonly [CflowPlugin, unknown])[];
-    /** Plugin packages to load, as in CFLOW_PLUGINS. */
-    load?: string[];
+    /** Extra plugins to offer; all are enabled unless `enable` says otherwise. */
+    plugins?: readonly CflowPlugin[];
+    /** CFLOW_PLUGINS: the names to enable (default `core` plus every extra plugin). */
+    enable?: string[];
     /** Whether guest (read-only) sessions are allowed. */
     allowGuest?: boolean;
     /** Whether a proxy's X-Forwarded-For names the client (TRUST_PROXY). */
@@ -52,7 +53,7 @@ export async function setup(
   const config = {
     ...loadConfig({}),
     databasePath: ":memory:",
-    plugins: options.load ?? [],
+    plugins: options.enable ?? ["core", ...(options.plugins ?? []).map((p) => p.name)],
     allowGuest: options.allowGuest ?? false,
     trustProxy: options.trustProxy ?? false,
   };
@@ -60,7 +61,7 @@ export async function setup(
     db,
     clock,
     config,
-    plugins: options.plugins,
+    extraPlugins: Object.fromEntries((options.plugins ?? []).map((p) => [p.name, () => p])),
     env: options.env ?? {},
   });
 

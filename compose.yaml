@@ -11,7 +11,7 @@ services:
       APP_TIMEZONE: UTC
       SESSION_TTL_DAYS: "30"
       ALLOW_GUEST: "false"
-      CFLOW_PLUGINS: ""
+      CFLOW_PLUGINS: core
     volumes:
       - cflow-data:/data
     healthcheck:

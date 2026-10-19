@@ -7,43 +7,32 @@ import type { Client } from "@api/core/db.ts";
 import { type Clock, type Config, type CoreHookBus, createDeps, type Deps } from "@api/core/deps.ts";
 import { onError, onNotFound } from "@api/core/http.ts";
 import { Routes } from "@api/core/kernel.ts";
-import type { CflowHooks, CflowPlugin, CflowServices } from "@api/plugins/api.ts";
-import { ledgerPlugin } from "@api/plugins/ledger/index.ts";
-import { checkPluginName, pluginOptions } from "@api/plugins/loader.ts";
+import type { CflowHooks, CflowServices } from "@api/plugins/api.ts";
+import { PLUGINS, type PluginFactory } from "@api/plugins/index.ts";
+import { checkPluginName, enabledPlugins, pluginOptions } from "@api/plugins/loader.ts";
 
 import pkg from "../../package.json" with { type: "json" };
 
 const CFLOW_VERSION = pkg.version;
-/** Plugins declare the CFlow major version they target. */
-const PLUGIN_API_VERSION = Number(pkg.version.split(".")[0]);
-
-/** The core plugins, always registered before any other. */
-function corePlugins(deps: Deps): CflowPlugin[] {
-  return [ledgerPlugin(deps)] as CflowPlugin[];
-}
 
 export interface CflowOptions {
   db: Client;
   clock: Clock;
   config: Config;
-  /** Plugin objects to add after the built-in modules, optionally with options (default `{}`). */
-  plugins?: readonly (CflowPlugin | readonly [CflowPlugin, unknown])[];
-  /** Read for `CFLOW_PLUGIN_<NAME>_<KEY>` settings of the packages in `config.plugins`. */
+  /** Plugins to offer besides the ones in `plugins/`, by name; tests add their fixtures this way. */
+  extraPlugins?: Record<string, PluginFactory>;
+  /** Read for each enabled plugin's `CFLOW_PLUGIN_<NAME>_<KEY>` settings. */
   env?: NodeJS.ProcessEnv;
 }
 
 /**
- * Composition root: a plugin host with the built-in modules, extra plugins and
- * the packages listed in CFLOW_PLUGINS, set up and started. Any plugin failure
- * stops startup: a misconfigured plugin is an installation error.
+ * Composition root: a plugin host with the plugins CFLOW_PLUGINS enables (`core` first), set up
+ * and started. Any plugin failure stops startup: a misconfigured plugin is an installation error.
  */
 export async function startCflow(options: CflowOptions) {
   const { db, clock, config } = options;
   const host = new PluginHost<CflowHooks, CflowServices>({
-    // `name` is the plugin manifest key (`"cflow"` in plugin package.json), so it
-    // stays `cflow`: the plugin contract, not the product name.
     app: { name: "cflow", version: CFLOW_VERSION },
-    apiVersion: PLUGIN_API_VERSION,
     failure: "strict",
     hookErrors: "log",
   });
@@ -56,15 +45,16 @@ export async function startCflow(options: CflowOptions) {
   host.provide("clock", clock);
   host.provide("routes", routes);
 
-  for (const plugin of corePlugins(deps)) host.register(plugin);
-  for (const entry of options.plugins ?? []) {
-    const [plugin, pluginOpts] = Array.isArray(entry) ? entry : [entry, {}];
-    checkPluginName(plugin.name);
-    host.register(plugin, pluginOpts);
-  }
+  const extra = Object.keys(options.extraPlugins ?? {}).filter((name) => name in PLUGINS);
+  if (extra.length > 0) throw new Error(`Plugin "${extra[0]}" is already registered`);
+  const available: Record<string, PluginFactory> = { ...PLUGINS, ...options.extraPlugins };
   const env = options.env ?? process.env;
-  await host.load(config.plugins.map((spec) => [spec, pluginOptions(spec, env)] as const));
-  for (const plugin of host.list()) if (plugin.source !== "inline") checkPluginName(plugin.name);
+  for (const name of enabledPlugins(config.plugins, Object.keys(available))) {
+    const plugin = available[name]!(deps);
+    checkPluginName(plugin.name);
+    if (plugin.name !== name) throw new Error(`Plugin listed as "${name}" is named "${plugin.name}"`);
+    host.register(plugin, pluginOptions(name, env));
+  }
 
   await host.start();
   return { host, deps, app: createApp(deps, routes) };

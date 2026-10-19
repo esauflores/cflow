@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { balanceOf, categoryId, setup, txBody } from "../support/helpers.ts";
+import { balanceOf, categoryId, setup, txBody } from "../../support/helpers.ts";
 
 describe("transactions", () => {
   it("records signed amounts and keeps the balance as their sum", async () => {

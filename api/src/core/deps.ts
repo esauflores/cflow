@@ -10,7 +10,7 @@ export interface Config {
   /** IANA zone that defines "today" for dates. */
   timeZone: string;
   sessionTtlMs: number;
-  /** Plugin packages or paths to load, from CFLOW_PLUGINS (comma-separated). */
+  /** Plugins to enable, by name, from CFLOW_PLUGINS (comma-separated; `core` when unset or empty). */
   plugins: string[];
   /** Whether the login screen offers a read-only guest session (ALLOW_GUEST). */
   allowGuest: boolean;
@@ -34,6 +34,14 @@ function positiveInt(env: NodeJS.ProcessEnv, name: string, fallback: number): nu
   return value;
 }
 
+function pluginList(raw: string | undefined): string[] {
+  const names = (raw ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return names.length > 0 ? names : ["core"];
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const timeZone = env.APP_TIMEZONE ?? "UTC";
   // Throws a RangeError early for an unknown zone.
@@ -43,10 +51,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     databasePath: env.DATABASE_PATH || "data/cflow.db",
     timeZone,
     sessionTtlMs: positiveInt(env, "SESSION_TTL_DAYS", 30) * 24 * HOUR_MS,
-    plugins: (env.CFLOW_PLUGINS ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
+    plugins: pluginList(env.CFLOW_PLUGINS),
     allowGuest: isTrue(env.ALLOW_GUEST),
     trustProxy: isTrue(env.TRUST_PROXY),
   };

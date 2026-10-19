@@ -4,15 +4,15 @@ import { z } from "zod";
 import type { CflowPlugin } from "@api/plugins/api.ts";
 
 // A small plugin used by the tests; it exercises every part of the contract.
-// It is loaded like an installed package (natively, without CFlow's aliases),
-// so it only imports CFlow's types, and talks to the database in plain SQL.
+// It only imports CFlow's types and talks to the database in plain SQL, as a
+// plugin in api/src/plugins would.
 
 const optionsSchema = z.object({ GREETING: z.string().default("hello") });
 
 const plugin: CflowPlugin<z.output<typeof optionsSchema>, z.input<typeof optionsSchema>> = {
   name: "notes",
   version: "1.0.0",
-  dependsOn: ["ledger"],
+  dependsOn: ["core"],
   optionsSchema,
   async setup(ctx) {
     const db = ctx.use("db");

@@ -40,15 +40,15 @@ mise run dev                  # web app and API together on http://localhost:517
 
 Environment variables, read from `.env` in development and from `compose.yaml` in Docker:
 
-| Variable           | Default         | Meaning                                                                           |
-| ------------------ | --------------- | --------------------------------------------------------------------------------- |
-| `PORT`             | `5173`          | Port for the web app and the API together (the Docker image uses `8080`)          |
-| `DATABASE_PATH`    | `data/cflow.db` | SQLite file (the Docker image uses `/data/cflow.db`)                              |
-| `APP_TIMEZONE`     | `UTC`           | Zone that defines "today" for transaction dates                                   |
-| `SESSION_TTL_DAYS` | `30`            | How long a login lasts                                                            |
-| `ALLOW_GUEST`      | `false`         | Offer a read-only "Enter as guest" session on the login screen                    |
-| `TRUST_PROXY`      | `false`         | Set behind a reverse proxy, so login limits apply per client, not per proxy       |
-| `CFLOW_PLUGINS`    | (none)          | Plugin packages or paths to load, comma-separated; see [plugins](docs/plugins.md) |
+| Variable           | Default         | Meaning                                                                                |
+| ------------------ | --------------- | -------------------------------------------------------------------------------------- |
+| `PORT`             | `5173`          | Port for the web app and the API together (the Docker image uses `8080`)               |
+| `DATABASE_PATH`    | `data/cflow.db` | SQLite file (the Docker image uses `/data/cflow.db`)                                   |
+| `APP_TIMEZONE`     | `UTC`           | Zone that defines "today" for transaction dates                                        |
+| `SESSION_TTL_DAYS` | `30`            | How long a login lasts                                                                 |
+| `ALLOW_GUEST`      | `false`         | Offer a read-only "Enter as guest" session on the login screen                         |
+| `TRUST_PROXY`      | `false`         | Set behind a reverse proxy, so login limits apply per client, not per proxy            |
+| `CFLOW_PLUGINS`    | `core`          | Plugins to enable, comma-separated; `core` is required; see [plugins](docs/plugins.md) |
 
 ## Development
 

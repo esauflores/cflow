@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryId, setup, txBody } from "../support/helpers.ts";
+import { categoryId, setup, txBody } from "../../support/helpers.ts";
 
 describe("categories", () => {
   it("starts a new database with the default categories", async () => {

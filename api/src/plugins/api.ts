@@ -2,12 +2,11 @@ import { definePluginFor, type Plugin } from "@esauflores/plugin-sdk";
 
 import type { HookName } from "@api/core/deps.ts";
 import type { KernelServices } from "@api/core/kernel.ts";
-import type { LedgerFacade, TransactionView } from "@api/plugins/ledger/index.ts";
+import type { LedgerFacade, TransactionView } from "@api/plugins/core/index.ts";
 
 /**
  * The plugin contract, on top of `@esauflores/plugin-sdk`. Everything a plugin
  * may rely on is exported from this file; anything else in the API is internal.
- * Plugin packages declare `"cflow": { "apiVersion": <CFlow major version>, "entry": "…" }`.
  */
 
 /** What each hook delivers. Hooks fire after the change is committed. */
@@ -24,7 +23,7 @@ export type CflowHooks = { [K in HookName]: (payload: HookPayloads[K]) => unknow
 
 /**
  * `db`, `clock` and `routes` come from the host and need no `dependsOn`.
- * `ledger` is the core plugin: list it in `dependsOn` to `use`
+ * `ledger` is the service of the `core` plugin: list "core" in `dependsOn` to `use`
  * it. Read any table through `db`, but write core data through `ledger` so it
  * is validated and raises hooks. By contract a plugin mounts its
  * routes under `/plugins/<name>` and only touches tables prefixed `<name>_`;

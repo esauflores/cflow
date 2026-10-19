@@ -1,6 +1,3 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { definePlugin } from "@api/plugins/api.ts";
@@ -8,24 +5,19 @@ import { definePlugin } from "@api/plugins/api.ts";
 import { balanceOf, categoryId, setup, txBody } from "../support/helpers.ts";
 import notesPlugin from "./fixtures/notes/index.ts";
 
-const NOTES_PATH = join(import.meta.dirname, "fixtures", "notes");
-
 type Note = { kind: string; text: string };
 const notesOf = async (h: Awaited<ReturnType<typeof setup>>) =>
   (await (await h.request("GET", "/api/plugins/notes")).json()) as Note[];
 
-/** A plugin package in a temp folder, for loader tests. */
-function packageDir(manifest: Record<string, unknown>, source = "export default { name: 'tmp_plugin', setup() {} };") {
-  const dir = mkdtempSync(join(tmpdir(), "cflow-plugin-"));
-  writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "tmp", type: "module", cflow: manifest }));
-  writeFileSync(join(dir, "index.js"), source);
-  return dir;
-}
-
 describe("plugins", () => {
-  it("loads a plugin package that creates its tables and mounts its routes behind auth", async () => {
-    const h = await setup({ load: [NOTES_PATH] });
-    expect(h.host.get("notes")).toMatchObject({ state: "started", source: NOTES_PATH });
+  it("enables only core by default", async () => {
+    const h = await setup();
+    expect(h.host.list().map((p) => p.name)).toEqual(["core"]);
+  });
+
+  it("enables the plugins CFLOW_PLUGINS lists, which create their tables and mount routes behind auth", async () => {
+    const h = await setup({ plugins: [notesPlugin] });
+    expect(h.host.list().map((p) => p.name)).toEqual(["core", "notes"]);
 
     const tables = await h.db.execute("SELECT name FROM sqlite_master WHERE type = 'table'");
     expect(tables.rows.map((t) => t.name)).toContain("notes_items");
@@ -78,24 +70,30 @@ describe("plugins", () => {
 
   it("passes namespaced settings as validated options", async () => {
     const h = await setup({
-      load: [NOTES_PATH],
+      plugins: [notesPlugin],
       env: { CFLOW_PLUGIN_NOTES_GREETING: "hola", CFLOW_PLUGIN_OTHER_SECRET: "nope" },
     });
     expect(await (await h.request("GET", "/api/plugins/notes/options")).json()).toEqual({ GREETING: "hola" });
   });
 
+  it("rejects a plugin list without core, with an unknown name or with a repeat", async () => {
+    await expect(setup({ plugins: [notesPlugin], enable: ["notes"] })).rejects.toThrow(/must include "core"/);
+    await expect(setup({ enable: ["core", "receipts"] })).rejects.toThrow(/Unknown plugin "receipts".*available: core/);
+    await expect(setup({ plugins: [notesPlugin], enable: ["core", "notes", "notes"] })).rejects.toThrow(
+      /"notes" more than once/,
+    );
+    // A plugin that isn't listed doesn't run.
+    const h = await setup({ plugins: [notesPlugin], enable: ["core"] });
+    expect(h.host.list().map((p) => p.name)).toEqual(["core"]);
+  });
+
   it("rejects invalid plugins at startup", async () => {
     const valid = definePlugin({ name: "valid_one", setup() {} });
-
-    await expect(setup({ load: [packageDir({ apiVersion: 99, entry: "./index.js" })] })).rejects.toThrow(
-      /plugin API v99/,
-    );
     await expect(setup({ plugins: [{ ...valid, name: "Bad-Name" }] })).rejects.toThrow(/Invalid plugin name/);
-    await expect(setup({ plugins: [{ ...valid, name: "ledger" }] })).rejects.toThrow(/already registered/);
-    await expect(setup({ plugins: [valid, valid] })).rejects.toThrow(/already registered/);
+    await expect(setup({ plugins: [{ ...valid, name: "core" }] })).rejects.toThrow(/already registered/);
     await expect(setup({ plugins: [{ ...valid, dependsOn: ["missing"] }] })).rejects.toThrow(/missing dependency/);
     await expect(
       setup({ plugins: [definePlugin({ name: "greedy", setup: (ctx) => void ctx.use("ledger") })] }),
-    ).rejects.toThrow(/without listing "ledger" in dependsOn/);
+    ).rejects.toThrow(/uses "ledger" from "core" without listing "core" in dependsOn/);
   });
 });

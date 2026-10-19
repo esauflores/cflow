@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import type { Deps } from "@api/core/deps.ts";
 import { type PageInput, parseInput, toPageRequest } from "@api/core/http.ts";
-import * as categories from "@api/plugins/ledger/categories.ts";
-import * as transactions from "@api/plugins/ledger/transactions.ts";
+import * as categories from "@api/plugins/core/categories.ts";
+import * as transactions from "@api/plugins/core/transactions.ts";
 
 // The ledger as plugins see it. Inputs take the same shape as the REST
 // request bodies (decimal amounts) and go through the same validation, so a

@@ -7,7 +7,7 @@ import type { Clock, Deps } from "@api/core/deps.ts";
 import { badRequest, notFound, ok, pageOf, pageRequest, type PageRequest, validate } from "@api/core/http.ts";
 import { addMonths, localDate } from "@api/core/lib/dates.ts";
 import { type Cents, money, toAmount } from "@api/core/lib/money.ts";
-import { CATEGORY_TYPES, type CategoryType, requireCategoryFor, typeOf } from "@api/plugins/ledger/categories.ts";
+import { CATEGORY_TYPES, type CategoryType, requireCategoryFor, typeOf } from "@api/plugins/core/categories.ts";
 
 // The one account's transactions. Writes go through `createTransaction`,
 // `updateTransaction` and `deleteTransaction`, which raise a hook after the

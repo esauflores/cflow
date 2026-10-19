@@ -11,13 +11,13 @@ api/
   src/
     core/                 the kernel: config and clock (deps.ts), database (db.ts), HTTP envelope and
                           errors (http.ts), route registry (kernel.ts), auth/, money and date helpers
-    plugins/              the plugin contract (api.ts), name and settings checks (loader.ts), and
-                          ledger/, the core plugin
+    plugins/              the plugin contract (api.ts), the list of plugins (index.ts), which ones
+                          CFLOW_PLUGINS enables (loader.ts), and one folder per plugin: core/
     app.ts                composition root: plugin host, plugins, Hono app
     node.ts               production entry: database, server, graceful shutdown
     dev.ts                development entry, loaded by the dev server
-  tests/                  core/, ledger/, plugins/ (fixtures/notes exercises the whole plugin
-                          contract), support/ (in-memory database, test clock, logged-in client),
+  tests/                  core/, plugins/ (core/ for the core plugin; fixtures/notes exercises the
+                          whole plugin contract), support/ (in-memory database, test clock, logged-in client),
                           architecture.test.ts
 web/
   src/
@@ -47,12 +47,12 @@ CFlow is a small kernel plus plugins, on
 database connection, the HTTP envelope and authentication: `app.ts` mounts `/api/auth` and puts every
 plugin route behind the session check.
 
-Everything else is a plugin. The ledger is the core plugin, registered before any other: in `setup` it
-creates its tables (a new database gets the default categories), mounts its routes, and provides its
-facade as the `ledger` service. Installed plugins go through the same host (see
-[plugins](plugins.md)).
+Everything else is a plugin, living in `api/src/plugins/<name>/` and enabled by `CFLOW_PLUGINS`. The
+`core` plugin is required and registered first: in `setup` it creates its tables (a new database gets
+the default categories), mounts its routes, and provides its facade as the `ledger` service. Other
+plugins go through the same host (see [plugins](plugins.md)).
 
-The ledger is four files: `index.ts` (the plugin and its public exports), `facade.ts` (the `ledger`
+The core plugin is four files: `index.ts` (the plugin and its public exports), `facade.ts` (the `ledger`
 service), and `categories.ts` and `transactions.ts`, each holding its queries and routes. Writes go
 through `createTransaction`, `updateTransaction` and `deleteTransaction`, which raise a hook after the
 commit.
@@ -71,5 +71,5 @@ go negative. Money is stored as integer cents and dates as `YYYY-MM-DD` text.
 
 There are no migrations: on start, auth and every plugin create their tables with
 `CREATE TABLE IF NOT EXISTS`. Each table is defined once, as the `CREATE TABLE` statement in the file
-that queries it (e.g. `TRANSACTIONS_TABLE` in `ledger/transactions.ts`). The database runs in WAL mode,
+that queries it (e.g. `TRANSACTIONS_TABLE` in `plugins/core/transactions.ts`). The database runs in WAL mode,
 so reads don't wait behind a write.

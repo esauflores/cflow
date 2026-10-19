@@ -21,8 +21,12 @@ const { host, app } = await startCflow({
   clock: systemClock(config.timeZone),
   config,
 });
-const installed = host.list().filter((p) => p.source !== "inline");
-if (installed.length > 0) console.log(`Plugins: ${installed.map((p) => `${p.name} (${p.source})`).join(", ")}`);
+console.log(
+  `Plugins: ${host
+    .list()
+    .map((p) => p.name)
+    .join(", ")}`,
+);
 
 // One process, one port, as in development: /api and /health go to the API, everything else is the built
 // web app in web/dist (`vp build`), with index.html for client-side routes such as /transactions.
