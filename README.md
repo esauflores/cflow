@@ -6,6 +6,16 @@ one account: its transactions and categories.
 Budgets and reports were ported too and are parked until they come back as
 plugins.
 
+Demo: https://cflow-demo.esauflores.com
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+| New transaction                                          | Transactions                                       |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| ![New transaction](docs/screenshots/new-transaction.png) | ![Transactions](docs/screenshots/transactions.png) |
+
+![Settings](docs/screenshots/settings.png)
+
 ## Stack
 
 | Layer           | Choice                                                                                                |

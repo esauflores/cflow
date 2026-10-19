@@ -9,3 +9,4 @@ data
 coverage
 Dockerfile
 compose.yaml
+docs
