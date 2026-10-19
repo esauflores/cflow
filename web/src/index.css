@@ -1,0 +1,164 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+
+/* shadcn/ui theme tokens; the `dark` class on <html> switches them. */
+@custom-variant dark (&:is(.dark *));
+
+/* The data-state variants shadcn components use (from shadcn/tailwind.css). */
+@custom-variant data-open {
+  &:where([data-state="open"]),
+  &:where([data-open]:not([data-open="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-closed {
+  &:where([data-state="closed"]),
+  &:where([data-closed]:not([data-closed="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-checked {
+  &:where([data-state="checked"]),
+  &:where([data-checked]:not([data-checked="false"])) {
+    @slot;
+  }
+}
+@custom-variant data-disabled {
+  &:where([data-disabled="true"]),
+  &:where([data-disabled]:not([data-disabled="false"])) {
+    @slot;
+  }
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-income: var(--income);
+  --color-spending: var(--spending);
+  --color-sidebar: var(--sidebar);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* Cflow Studio palette: near-black surfaces, orange actions, blue income,
+ * orange spending in charts and red for money out in lists. */
+:root {
+  --radius: 0.625rem;
+  --background: #f5f6f8;
+  --foreground: #15171b;
+  --card: #ffffff;
+  --card-foreground: #15171b;
+  --popover: #ffffff;
+  --popover-foreground: #15171b;
+  --sidebar: #ffffff;
+  --primary: #f97316;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0f3;
+  --secondary-foreground: #15171b;
+  --muted: #eef0f3;
+  --muted-foreground: #5d6573;
+  --accent: #eef0f3;
+  --accent-foreground: #15171b;
+  --destructive: #dc2626;
+  --income: #2563eb;
+  --spending: #f97316;
+  --border: #e3e6eb;
+  --input: #e3e6eb;
+  --ring: #a1a1aa;
+}
+
+.dark {
+  --background: #111317;
+  --foreground: #ffffff;
+  --card: #1a1c20;
+  --card-foreground: #ffffff;
+  --popover: #1a1c20;
+  --popover-foreground: #ffffff;
+  --sidebar: #16181c;
+  --primary: #f97316;
+  --primary-foreground: #ffffff;
+  --secondary: #24272d;
+  --secondary-foreground: #ffffff;
+  --muted: #24272d;
+  --muted-foreground: rgb(255 255 255 / 0.6);
+  --accent: #262b35;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --income: #3b82f6;
+  --spending: #f97316;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.12);
+  --ring: rgb(255 255 255 / 0.35);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  /* Thin rounded scrollbars in theme colours, with no track or arrow buttons. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+  ::-webkit-scrollbar-thumb {
+    /* The transparent border insets the thumb from the window edge. */
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    background-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+  /* Firefox has no ::-webkit-scrollbar; Chromium ignores it once scrollbar-color is set, so only Firefox gets this. */
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent) transparent;
+    }
+  }
+  /* No browser spinners on number inputs. */
+  input[type="number"] {
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}

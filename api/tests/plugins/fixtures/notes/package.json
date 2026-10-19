@@ -1,0 +1,9 @@
+{
+  "name": "cflow-plugin-notes",
+  "version": "1.0.0",
+  "type": "module",
+  "cflow": {
+    "apiVersion": 0,
+    "entry": "./index.ts"
+  }
+}

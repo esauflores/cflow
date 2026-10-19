@@ -1,0 +1,8 @@
+node_modules/
+.vitest/
+coverage/
+.env
+.env.*
+!.env.example
+data/
+dist/

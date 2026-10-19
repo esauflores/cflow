@@ -1,0 +1,28 @@
+[env]
+_.file = ".env"
+
+[tools]
+node = "24"
+bun = "latest"
+
+[tasks.check]
+description = "Format, lint and typecheck the API and the web app"
+run = "bun run check"
+
+[tasks.check-fix]
+run = "bun run check:fix"
+
+[tasks.test]
+run = "bun run test"
+
+[tasks.dev]
+description = "Run the API and the web app together, with reload"
+run = "bun run dev"
+
+[tasks.build]
+description = "Build the web app into web/dist"
+run = "bun run build"
+
+[tasks.start]
+description = "Build the web app and run CFlow in production mode (one port)"
+run = "bun run start"
