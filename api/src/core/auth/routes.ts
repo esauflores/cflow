@@ -11,6 +11,9 @@ export type AuthEnv = { Variables: { sessionId: string; role: auth.SessionRole }
 const password = z.string().min(8, "Password must be at least 8 characters").max(256);
 const LOGIN_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60_000;
+/** Guest sessions one client may open per window: each is a stored row. */
+const GUEST_SESSIONS = 10;
+const GUEST_WINDOW_MS = 15 * 60_000;
 
 function bearerToken(header: string | undefined): string | undefined {
   const match = /^Bearer\s+(\S+)$/i.exec(header ?? "");
@@ -37,7 +40,16 @@ export const blockGuestWrites: MiddlewareHandler<AuthEnv> = async (c, next) => {
   await next();
 };
 
-function clientKey(c: Parameters<MiddlewareHandler>[0]): string {
+/**
+ * The client's address. Behind a proxy (`trustProxy`) every connection comes from the proxy, so the
+ * address is the last `X-Forwarded-For` entry: the one the proxy appended. Earlier entries come from
+ * the client and can be forged.
+ */
+function clientKey(c: Parameters<MiddlewareHandler>[0], trustProxy: boolean): string {
+  if (trustProxy) {
+    const forwarded = c.req.header("X-Forwarded-For")?.split(",").at(-1)?.trim();
+    if (forwarded) return forwarded;
+  }
   try {
     return getConnInfo(c).remote.address ?? "unknown";
   } catch {
@@ -77,8 +89,16 @@ class AttemptLimiter {
   }
 }
 
+/** Answers 429 with `Retry-After` while `waitMs` is above zero. */
+function throwIfLimited(c: Parameters<MiddlewareHandler>[0], waitMs: number, message: string): void {
+  if (waitMs <= 0) return;
+  c.header("Retry-After", String(Math.ceil(waitMs / 1000)));
+  throw new AppError(429, "TOO_MANY_REQUESTS", message);
+}
+
 export function authRoutes(deps: Deps) {
   const limiter = new AttemptLimiter(LOGIN_ATTEMPTS, LOGIN_WINDOW_MS);
+  const guestLimiter = new AttemptLimiter(GUEST_SESSIONS, GUEST_WINDOW_MS);
   const session = requireSession(deps);
   const sessionBody = (s: auth.Session) => ({ token: s.token, expiresAt: s.expiresAt, guest: s.role === "guest" });
 
@@ -94,13 +114,9 @@ export function authRoutes(deps: Deps) {
       return ok(c, "Server set up", sessionBody(created), 201);
     })
     .post("/login", validate("json", z.object({ password: z.string().min(1).max(256) })), async (c) => {
-      const key = clientKey(c);
+      const key = clientKey(c, deps.config.trustProxy);
       const now = deps.clock.now().getTime();
-      const wait = limiter.retryAfter(key, now);
-      if (wait > 0) {
-        c.header("Retry-After", String(Math.ceil(wait / 1000)));
-        throw new AppError(429, "TOO_MANY_REQUESTS", "Too many failed login attempts, try again later");
-      }
+      throwIfLimited(c, limiter.retryAfter(key, now), "Too many failed login attempts, try again later");
       try {
         const created = await auth.login(deps, c.req.valid("json").password);
         limiter.reset(key);
@@ -113,6 +129,10 @@ export function authRoutes(deps: Deps) {
     .post("/guest", async (c) => {
       if (!deps.config.allowGuest) throw forbidden("Guest access is disabled");
       if (!(await auth.isBootstrapped(deps.db))) throw conflict("The server has not been set up yet");
+      const key = clientKey(c, deps.config.trustProxy);
+      const now = deps.clock.now().getTime();
+      throwIfLimited(c, guestLimiter.retryAfter(key, now), "Too many guest sessions, try again later");
+      guestLimiter.fail(key, now);
       return ok(c, "Entered as guest", sessionBody(await auth.guest(deps)));
     })
     .post("/logout", session, async (c) => {

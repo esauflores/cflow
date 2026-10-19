@@ -14,24 +14,41 @@ export interface Config {
   plugins: string[];
   /** Whether the login screen offers a read-only guest session (ALLOW_GUEST). */
   allowGuest: boolean;
+  /**
+   * Whether a reverse proxy sits in front (TRUST_PROXY): the client's address is then the last
+   * `X-Forwarded-For` entry, which the proxy appended, rather than the proxy's own address.
+   */
+  trustProxy: boolean;
 }
 
 const HOUR_MS = 3_600_000;
+
+const isTrue = (value: string | undefined) => /^(1|true|yes)$/i.test(value ?? "");
+
+/** A positive whole number from the environment, failing startup on anything else. */
+function positiveInt(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
+  const raw = env[name];
+  if (raw === undefined || raw === "") return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) throw new Error(`${name} must be a positive whole number, got "${raw}"`);
+  return value;
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const timeZone = env.APP_TIMEZONE ?? "UTC";
   // Throws a RangeError early for an unknown zone.
   new Intl.DateTimeFormat("en", { timeZone });
   return {
-    port: Number(env.PORT ?? 5173),
+    port: positiveInt(env, "PORT", 5173),
     databasePath: env.DATABASE_PATH || "data/cflow.db",
     timeZone,
-    sessionTtlMs: Number(env.SESSION_TTL_DAYS ?? 30) * 24 * HOUR_MS,
+    sessionTtlMs: positiveInt(env, "SESSION_TTL_DAYS", 30) * 24 * HOUR_MS,
     plugins: (env.CFLOW_PLUGINS ?? "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean),
-    allowGuest: /^(1|true|yes)$/i.test(env.ALLOW_GUEST ?? ""),
+    allowGuest: isTrue(env.ALLOW_GUEST),
+    trustProxy: isTrue(env.TRUST_PROXY),
   };
 }
 

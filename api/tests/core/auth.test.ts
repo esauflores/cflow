@@ -75,6 +75,37 @@ describe("auth", () => {
     expect((await h.request("POST", "/api/auth/login", { password: PASSWORD })).status).toBe(200);
   });
 
+  it("behind a trusted proxy, limits each client by the address the proxy appended", async () => {
+    const h = await setup({ trustProxy: true });
+    h.token = "";
+    const login = (password: string, forwardedFor: string) =>
+      h.request("POST", "/api/auth/login", { password }, { "X-Forwarded-For": forwardedFor });
+    for (let i = 0; i < 5; i++) expect((await login("nope nope", "203.0.113.9")).status).toBe(401);
+    expect((await login(PASSWORD, "203.0.113.9")).status).toBe(429);
+    // A forged entry before the proxy's doesn't change who the client is.
+    expect((await login(PASSWORD, "198.51.100.1, 203.0.113.9")).status).toBe(429);
+    // Another client is unaffected.
+    expect((await login(PASSWORD, "198.51.100.7")).status).toBe(200);
+  });
+
+  it("limits how many guest sessions one client can open", async () => {
+    const h = await setup({ allowGuest: true });
+    h.token = "";
+    for (let i = 0; i < 10; i++) expect((await h.request("POST", "/api/auth/guest")).status).toBe(200);
+    const blocked = await h.request("POST", "/api/auth/guest");
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  it("clears expired sessions when a new one starts", async () => {
+    const h = await setup();
+    const count = async () => (await h.db.execute("SELECT count(*) AS n FROM sessions")).rows[0]!.n;
+    expect(await count()).toBe(1);
+    h.clock.set("2026-04-20T12:00:00Z");
+    await h.data("POST", "/api/auth/login", { password: PASSWORD });
+    expect(await count()).toBe(1);
+  });
+
   it("expires sessions after their lifetime", async () => {
     const h = await setup();
     h.clock.set("2026-04-20T12:00:00Z");

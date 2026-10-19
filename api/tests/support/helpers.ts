@@ -42,6 +42,8 @@ export async function setup(
     load?: string[];
     /** Whether guest (read-only) sessions are allowed. */
     allowGuest?: boolean;
+    /** Whether a proxy's X-Forwarded-For names the client (TRUST_PROXY). */
+    trustProxy?: boolean;
     env?: Record<string, string>;
   } = {},
 ): Promise<Harness> {
@@ -52,6 +54,7 @@ export async function setup(
     databasePath: ":memory:",
     plugins: options.load ?? [],
     allowGuest: options.allowGuest ?? false,
+    trustProxy: options.trustProxy ?? false,
   };
   const { host, deps, app } = await startCflow({
     db,

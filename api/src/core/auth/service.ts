@@ -49,10 +49,17 @@ async function createSession({ db, clock, config }: Deps, role: SessionRole): Pr
   const token = randomBytes(32).toString("base64url");
   const now = clock.now().getTime();
   const expiresAt = new Date(now + config.sessionTtlMs);
-  await db.execute({
-    sql: "INSERT INTO sessions (id, created_at, expires_at, role) VALUES (?, ?, ?, ?)",
-    args: [hashToken(token), now, expiresAt.getTime(), role],
-  });
+  // Expired sessions are useless; clearing them here keeps the table from only ever growing.
+  await db.batch(
+    [
+      { sql: "DELETE FROM sessions WHERE expires_at <= ?", args: [now] },
+      {
+        sql: "INSERT INTO sessions (id, created_at, expires_at, role) VALUES (?, ?, ?, ?)",
+        args: [hashToken(token), now, expiresAt.getTime(), role],
+      },
+    ],
+    "write",
+  );
   return { token, expiresAt, role };
 }
 
