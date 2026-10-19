@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # Node and Bun at the versions in mise.toml; the tasks below are the same ones run locally.
+      # Bun at the version in mise.toml; the tasks below are the same ones run locally.
       - uses: jdx/mise-action@v5
       - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps chromium
+      - run: bunx --bun playwright install --with-deps chromium
       - run: mise run check
       - run: mise run test
       - run: mise run build

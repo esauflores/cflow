@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "vp check",
-    "check:fix": "vp check --fix",
-    "test": "vp test",
-    "dev": "vp dev",
-    "build": "vp build && vp pack",
+    "check": "bun --bun vp check",
+    "check:fix": "bun --bun vp check --fix",
+    "test": "bun --bun vp test",
+    "dev": "bun --bun vp dev",
+    "build": "bun --bun vp build && bun --bun vp pack",
     "start": "bun run build && bun dist/server.mjs"
   },
   "dependencies": {

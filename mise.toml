@@ -2,8 +2,7 @@
 _.file = ".env"
 
 [tools]
-node = "24"
-bun = "latest"
+bun = "1.4"
 
 [tasks.check]
 description = "vp check: format, lint and type-check the API and the web app"

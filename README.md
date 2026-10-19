@@ -8,14 +8,14 @@ plugins.
 
 ## Stack
 
-| Layer           | Choice                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------ |
-| HTTP            | Hono on Node.js 24: inside `vp dev` in development (`@hono/vite-dev-server`), `@hono/node-server` on its own |
-| Database        | libSQL (SQLite), a local file                                                                                |
-| Database access | plain SQL on `@libsql/client`; no ORM, no migrations                                                         |
-| Validation      | zod                                                                                                          |
-| Web             | React 19, react-router, TanStack Query, Tailwind                                                             |
-| Tooling         | Bun (one package), Vite+ (format, lint, test), mise                                                          |
+| Layer           | Choice                                                                                                |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| HTTP            | Hono on Bun: inside `vp dev` in development (`@hono/vite-dev-server`), `@hono/node-server` on its own |
+| Database        | libSQL (SQLite), a local file                                                                         |
+| Database access | plain SQL on `@libsql/client`; no ORM, no migrations                                                  |
+| Validation      | zod                                                                                                   |
+| Web             | React 19, react-router, TanStack Query, Tailwind                                                      |
+| Tooling         | Bun (one package), Vite+ (format, lint, test), mise                                                   |
 
 ## Running
 
