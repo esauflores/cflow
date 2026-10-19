@@ -24,5 +24,6 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx --bun playwright install --with-deps chromium
       - run: mise run check
+      - run: mise run knip
       - run: mise run test
       - run: mise run build

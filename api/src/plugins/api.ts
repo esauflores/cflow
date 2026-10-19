@@ -36,4 +36,5 @@ export interface CflowServices extends KernelServices {
 
 export type CflowPlugin<Options = any, Input = Options> = Plugin<Options, CflowHooks, CflowServices, Input>;
 
+/** @public For plugin packages: `definePlugin({ name, setup, … })`. */
 export const definePlugin = definePluginFor<CflowHooks, CflowServices>();

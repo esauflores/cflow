@@ -5,7 +5,10 @@ export type Cents = number;
 
 const MONEY_PATTERN = /^(\d{1,12})(?:\.(\d{1,2}))?$/;
 
-/** Parses a non-negative decimal with at most 12 integer and 2 fraction digits. */
+/**
+ * Parses a non-negative decimal with at most 12 integer and 2 fraction digits.
+ * @internal Exported for tests.
+ */
 export function parseMoney(input: string | number): Cents | null {
   const text = typeof input === "number" ? String(input) : input.trim();
   const match = MONEY_PATTERN.exec(text);
@@ -44,40 +47,4 @@ export function money(options: { min?: Cents; max?: Cents; signed?: boolean } = 
     }
     return negative ? -cents : cents;
   });
-}
-
-type Rounding = "HALF_UP" | "HALF_EVEN";
-
-/** Integer division of `num / den` (den > 0) rounded to the nearest integer. */
-export function divRound(num: bigint, den: bigint, mode: Rounding): bigint {
-  const negative = num < 0n;
-  const abs = negative ? -num : num;
-  let quotient = abs / den;
-  const twiceRemainder = (abs % den) * 2n;
-  if (twiceRemainder > den || (twiceRemainder === den && (mode === "HALF_UP" || quotient % 2n === 1n))) {
-    quotient += 1n;
-  }
-  return negative ? -quotient : quotient;
-}
-
-/** `part / total` as a percentage with one decimal, or 0 when total is 0. */
-export function percentageOf(part: number, total: number): number {
-  if (total === 0) return 0;
-  return roundedPercentage(BigInt(part), BigInt(total));
-}
-
-/**
- * Relative change from `previous` to `current` as a percentage with one
- * decimal. Growth from zero counts as 100%.
- */
-export function percentageChange(previous: number, current: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return roundedPercentage(BigInt(current - previous), BigInt(Math.abs(previous)));
-}
-
-// Ratio rounded to 4 places, then scaled to a percentage with 1 place —
-// the same two-step rounding the original service applied.
-function roundedPercentage(num: bigint, den: bigint): number {
-  const ratio = divRound(num * 10_000n, den, "HALF_EVEN");
-  return Number(divRound(ratio, 10n, "HALF_EVEN")) / 10;
 }

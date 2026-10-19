@@ -89,6 +89,7 @@ export interface Session {
 const TOKEN_KEY = "cflow.token";
 const GUEST_KEY = "cflow.guest";
 
+/** @internal Exported for tests. */
 export function getToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -150,12 +151,16 @@ export function useGuest(): boolean {
 
 // Requests.
 
+/** @internal Exported for tests. */
 export interface FieldError {
   field: string;
   message: string;
 }
 
-/** A failed request, carrying the API's error code and per-field messages. */
+/**
+ * A failed request, carrying the API's error code and per-field messages.
+ * @internal Exported for tests.
+ */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;

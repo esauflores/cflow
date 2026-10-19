@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["api/src/node.ts", "api/src/dev.ts", "api/tests/**/*.test.ts", "web/tests/**/*.test.ts"],
-  "project": ["api/src/**/*.ts", "api/tests/**/*.ts", "web/src/**/*.{ts,tsx}", "web/tests/**/*.{ts,tsx}"],
+  "entry": ["api/src/node.ts!", "api/src/dev.ts!", "api/tests/**/*.test.ts", "web/tests/**/*.test.{ts,tsx}"],
+  "project": ["api/src/**/*.ts!", "api/tests/**/*.ts", "web/src/**/*.{ts,tsx}!", "web/tests/**/*.{ts,tsx}"],
   "ignore": ["web/src/components/**"],
   "paths": {
     "@api/*": ["./api/src/*"],

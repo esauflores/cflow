@@ -6,6 +6,7 @@
   "scripts": {
     "check": "bun --bun vp check",
     "check:fix": "bun --bun vp check --fix",
+    "knip": "bunx --bun knip && bunx --bun knip --production",
     "test": "bun --bun vp test",
     "dev": "bun --bun vp dev",
     "build": "bun --bun vp build && bun --bun vp pack",

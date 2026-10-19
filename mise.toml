@@ -11,6 +11,10 @@ run = "bun run check"
 [tasks.check-fix]
 run = "bun run check:fix"
 
+[tasks.knip]
+description = "knip: unused files, exports and dependencies, including exports only tests use"
+run = "bun run knip"
+
 [tasks.test]
 run = "bun run test"
 
