@@ -291,23 +291,23 @@ const summaryQuery = z.object({
 export function transactionRoutes(deps: Deps) {
   const { db, clock } = deps;
   return new Hono()
-    .get("/balance", async (c) => ok(c, "Balance retrieved", await balance(db)))
+    .get("/balance", async (c) => ok(c, await balance(db)))
     .get("/summary", validate("query", summaryQuery), async (c) => {
       const month = c.req.valid("query").month ?? clock.today().slice(0, 7);
-      return ok(c, "Summary retrieved", await summary(db, month));
+      return ok(c, await summary(db, month));
     })
     .get("/transactions", validate("query", filterSchema), async (c) => {
       const page = pageRequest(c, TRANSACTION_SORTS, { sort: "date", direction: "desc" });
-      return ok(c, "Transactions retrieved", await listTransactions(db, c.req.valid("query"), page));
+      return ok(c, await listTransactions(db, c.req.valid("query"), page));
     })
     .get("/transactions/:id", validate("param", idParam), async (c) =>
-      ok(c, "Transaction retrieved", await getTransaction(db, c.req.valid("param").id)),
+      ok(c, await getTransaction(db, c.req.valid("param").id)),
     )
     .post("/transactions", validate("json", transactionSchema), async (c) =>
-      ok(c, "Transaction created", await createTransaction(deps, c.req.valid("json")), 201),
+      ok(c, await createTransaction(deps, c.req.valid("json")), 201),
     )
     .put("/transactions/:id", validate("param", idParam), validate("json", transactionSchema), async (c) =>
-      ok(c, "Transaction updated", await updateTransaction(deps, c.req.valid("param").id, c.req.valid("json"))),
+      ok(c, await updateTransaction(deps, c.req.valid("param").id, c.req.valid("json"))),
     )
     .delete("/transactions/:id", validate("param", idParam), async (c) => {
       await deleteTransaction(deps, c.req.valid("param").id);

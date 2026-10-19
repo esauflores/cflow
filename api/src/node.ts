@@ -8,8 +8,8 @@ import { startCflow } from "@api/app.ts";
 import { openDatabase } from "@api/core/db.ts";
 import { loadConfig, systemClock } from "@api/core/deps.ts";
 
-// Node doesn't read .env by itself. Load it first, so PORT, DATABASE_PATH and
-// friends work as documented; a real environment variable still wins.
+// Bun loads .env by itself; this keeps `node dist/server.mjs` working the same. A real environment
+// variable still wins.
 if (existsSync(".env")) process.loadEnvFile(".env");
 
 const config = loadConfig();

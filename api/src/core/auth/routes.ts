@@ -104,14 +104,14 @@ export function authRoutes(deps: Deps) {
 
   return new Hono<AuthEnv>()
     .get("/status", async (c) =>
-      ok(c, "Server status retrieved", {
+      ok(c, {
         bootstrapped: await auth.isBootstrapped(deps.db),
         allowGuest: deps.config.allowGuest,
       }),
     )
     .post("/bootstrap", validate("json", z.object({ password })), async (c) => {
       const created = await auth.bootstrap(deps, c.req.valid("json").password);
-      return ok(c, "Server set up", sessionBody(created), 201);
+      return ok(c, sessionBody(created), 201);
     })
     .post("/login", validate("json", z.object({ password: z.string().min(1).max(256) })), async (c) => {
       const key = clientKey(c, deps.config.trustProxy);
@@ -120,7 +120,7 @@ export function authRoutes(deps: Deps) {
       try {
         const created = await auth.login(deps, c.req.valid("json").password);
         limiter.reset(key);
-        return ok(c, "Logged in", sessionBody(created));
+        return ok(c, sessionBody(created));
       } catch (err) {
         if (err instanceof AppError && err.code === "INVALID_CREDENTIALS") limiter.fail(key, now);
         throw err;
@@ -133,7 +133,7 @@ export function authRoutes(deps: Deps) {
       const now = deps.clock.now().getTime();
       throwIfLimited(c, guestLimiter.retryAfter(key, now), "Too many guest sessions, try again later");
       guestLimiter.fail(key, now);
-      return ok(c, "Entered as guest", sessionBody(await auth.guest(deps)));
+      return ok(c, sessionBody(await auth.guest(deps)));
     })
     .post("/logout", session, async (c) => {
       await auth.logout(deps.db, c.get("sessionId"));
@@ -147,7 +147,7 @@ export function authRoutes(deps: Deps) {
       async (c) => {
         const { currentPassword, newPassword } = c.req.valid("json");
         await auth.changePassword(deps, c.get("sessionId"), currentPassword, newPassword);
-        return ok(c, "Password changed", null);
+        return ok(c, null);
       },
     );
 }

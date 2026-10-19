@@ -48,8 +48,8 @@ database connection, the HTTP envelope and authentication: `app.ts` mounts `/api
 plugin route behind the session check.
 
 Everything else is a plugin. The ledger is the core plugin, registered before any other: in `setup` it
-creates its tables and mounts its routes, and provides its facade as the `ledger` service; in `start`
-it seeds the built-in categories. Installed plugins go through the same host (see
+creates its tables (a new database gets the default categories), mounts its routes, and provides its
+facade as the `ledger` service. Installed plugins go through the same host (see
 [plugins](plugins.md)).
 
 The ledger is four files: `index.ts` (the plugin and its public exports), `facade.ts` (the `ledger`

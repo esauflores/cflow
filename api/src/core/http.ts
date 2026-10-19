@@ -41,9 +41,9 @@ export const forbidden = (message: string, code: ErrorCode = "FORBIDDEN") => new
 export const notFound = (message: string, code: ErrorCode = "RESOURCE_NOT_FOUND") => new AppError(404, code, message);
 export const conflict = (message: string, code: ErrorCode = "CONFLICT") => new AppError(409, code, message);
 
-/** Writes the standard success envelope. */
-export function ok<T>(c: Context, message: string, data: T, status: ContentfulStatusCode = 200) {
-  return c.json({ success: true, message, data, timestamp: new Date().toISOString(), path: c.req.path }, status);
+/** Writes the success envelope, `{ success: true, data }`. */
+export function ok<T>(c: Context, data: T, status: ContentfulStatusCode = 200) {
+  return c.json({ success: true, data }, status);
 }
 
 function errorBody(c: Context, message: string, code: ErrorCode, errors?: FieldError[]) {

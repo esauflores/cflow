@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { categoryId, setup, txBody } from "../support/helpers.ts";
 
 describe("categories", () => {
-  it("seeds the built-in categories on a fresh database", async () => {
+  it("starts a new database with the default categories", async () => {
     const h = await setup();
     const all = await h.data<{ name: string; type: string }[]>("GET", "/api/categories");
     expect(all.filter((c) => c.type === "EXPENSE").map((c) => c.name)).toEqual([

@@ -169,7 +169,8 @@ export async function deleteCategory(client: Client, id: string): Promise<{ move
   return { moved: moved!.rowsAffected };
 }
 
-const SYSTEM_CATEGORIES: { name: string; type: CategoryType; color: string }[] = [
+/** The categories every new database starts with; users rename, recolour or delete them like any other. */
+const DEFAULT_CATEGORIES: { name: string; type: CategoryType; color: string }[] = [
   { name: "Food", type: "EXPENSE", color: "#ef4444" },
   { name: "Housing", type: "EXPENSE", color: "#3b82f6" },
   { name: "Bills", type: "EXPENSE", color: "#f59e0b" },
@@ -184,11 +185,11 @@ const SYSTEM_CATEGORIES: { name: string; type: CategoryType; color: string }[] =
   { name: "Other", type: "INCOME", color: NEUTRAL_COLOR },
 ];
 
-/** Inserts the built-in categories into a fresh database. */
-export async function seedCategories(client: Client): Promise<void> {
+/** Adds the default categories to a database that has none yet: a new one. */
+export async function createDefaultCategories(client: Client): Promise<void> {
   if (await first(client, "SELECT 1 FROM categories LIMIT 1")) return;
   await client.batch(
-    SYSTEM_CATEGORIES.map((c) => ({
+    DEFAULT_CATEGORIES.map((c) => ({
       sql: "INSERT INTO categories (id, name, type, color) VALUES (?, ?, ?, ?)",
       args: [randomUUID(), c.name, c.type, c.color],
     })),
@@ -196,31 +197,14 @@ export async function seedCategories(client: Client): Promise<void> {
   );
 }
 
-/** Adds `color` to databases created before categories stored one, backfilling the built-ins. */
-export async function migrateCategoryColors(client: Client): Promise<void> {
-  const columns = await all<{ name: string }>(client, "PRAGMA table_info(categories)");
-  if (columns.some((column) => column.name === "color")) return;
-  await client.execute(`ALTER TABLE categories ADD COLUMN color TEXT NOT NULL DEFAULT '${NEUTRAL_COLOR}'`);
-  for (const category of SYSTEM_CATEGORIES) {
-    await client.execute({
-      sql: "UPDATE categories SET color = ? WHERE type = ? AND name = ?",
-      args: [category.color, category.type, category.name],
-    });
-  }
-}
-
 const idParam = z.object({ id: z.uuid() });
 
 export function categoryRoutes({ db }: Deps) {
   return new Hono()
-    .get("/", async (c) => ok(c, "Categories retrieved", await listCategories(db)))
-    .post("/", validate("json", categorySchema), async (c) =>
-      ok(c, "Category created", await createCategory(db, c.req.valid("json")), 201),
-    )
+    .get("/", async (c) => ok(c, await listCategories(db)))
+    .post("/", validate("json", categorySchema), async (c) => ok(c, await createCategory(db, c.req.valid("json")), 201))
     .patch("/:id", validate("param", idParam), validate("json", updateCategorySchema), async (c) =>
-      ok(c, "Category updated", await updateCategory(db, c.req.valid("param").id, c.req.valid("json"))),
+      ok(c, await updateCategory(db, c.req.valid("param").id, c.req.valid("json"))),
     )
-    .delete("/:id", validate("param", idParam), async (c) =>
-      ok(c, "Category deleted", await deleteCategory(db, c.req.valid("param").id)),
-    );
+    .delete("/:id", validate("param", idParam), async (c) => ok(c, await deleteCategory(db, c.req.valid("param").id)));
 }

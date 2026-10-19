@@ -6,8 +6,7 @@ import {
   CATEGORIES_INDEXES,
   CATEGORIES_TABLE,
   categoryRoutes,
-  migrateCategoryColors,
-  seedCategories,
+  createDefaultCategories,
 } from "@api/plugins/ledger/categories.ts";
 import { ledgerFacade, type LedgerFacade } from "@api/plugins/ledger/facade.ts";
 import { TRANSACTIONS_INDEXES, TRANSACTIONS_TABLE, transactionRoutes } from "@api/plugins/ledger/transactions.ts";
@@ -22,19 +21,16 @@ export function ledgerPlugin(deps: Deps) {
   return defineCorePlugin<{ ledger: LedgerFacade }>()({
     name: "ledger",
     async setup(ctx) {
-      // Like any plugin, the ledger creates its own tables.
+      // Like any plugin, the ledger creates its own tables; a new database also gets the default categories.
       await deps.db.batch(
         [CATEGORIES_TABLE, TRANSACTIONS_TABLE, ...CATEGORIES_INDEXES, ...TRANSACTIONS_INDEXES],
         "write",
       );
-      await migrateCategoryColors(deps.db);
+      await createDefaultCategories(deps.db);
       ctx
         .use("routes")
         .mount("/", new Hono().route("/", transactionRoutes(deps)).route("/categories", categoryRoutes(deps)));
       ctx.provide("ledger", ledgerFacade(deps));
-    },
-    async start() {
-      await seedCategories(deps.db);
     },
   });
 }

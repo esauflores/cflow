@@ -20,7 +20,8 @@ CFlow started as a port of the [BFlow Financial Engine](https://github.com/Diazz
   `CURRENCIES` in `api/src/plugins/ledger/transactions.ts`.
 - **No idempotency keys.** CFlow only tracks money, so a retried request at worst records a duplicate
   you can delete. The `Idempotency-Key` header and its table are gone.
-- **Deletes return 204** with no body; every other response uses the original envelope.
+- **A slimmer envelope.** Successful responses are `{ success, data }`, without the original
+  `message`, `timestamp` and `path`; errors keep them. Deletes return 204 with no body.
 - **English only.** Messages and chart labels are in English; there is no localisation until it is
   needed.
 

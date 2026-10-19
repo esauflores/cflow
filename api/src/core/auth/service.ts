@@ -1,6 +1,6 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 
-import { type Client, type Executor, all, first, inTransaction } from "@api/core/db.ts";
+import { type Client, type Executor, first, inTransaction } from "@api/core/db.ts";
 import type { Deps } from "@api/core/deps.ts";
 import { conflict, unauthorized } from "@api/core/http.ts";
 
@@ -22,11 +22,6 @@ export async function createAuthTables(client: Client): Promise<void> {
     // `id` is the SHA-256 of the bearer token; the token itself is never stored.
     "CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, role TEXT NOT NULL DEFAULT 'owner')",
   ]);
-  // Adds the role to databases created before guest sessions existed.
-  const columns = await all<{ name: string }>(client, "PRAGMA table_info(sessions)");
-  if (!columns.some((column) => column.name === "role")) {
-    await client.execute("ALTER TABLE sessions ADD COLUMN role TEXT NOT NULL DEFAULT 'owner'");
-  }
 }
 
 export function hashToken(token: string): string {

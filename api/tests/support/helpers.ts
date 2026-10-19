@@ -97,7 +97,7 @@ export async function setup(
   return harness;
 }
 
-/** Looks up a seeded category id by name and type. */
+/** Looks up a default category's id by name and type. */
 export async function categoryId(h: Harness, name: string, type: "EXPENSE" | "INCOME"): Promise<string> {
   const all = await h.data<{ id: string; name: string; type: string }[]>("GET", "/api/categories");
   const found = all.find((c) => c.name === name && c.type === type);

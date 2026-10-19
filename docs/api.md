@@ -20,7 +20,8 @@ rather than to the proxy.
 
 ## Format
 
-Responses use the envelope `{ success, message, data, timestamp, path }`. Errors add `code` and, for
+Successful responses are `{ success: true, data }`. Errors are
+`{ success: false, message, code, timestamp, path }`, plus, for
 validation failures, `errors: [{ field, code, message }]`. Deletes answer 204 with no body.
 
 Lists take `page`, `size` and `sort=field,asc|desc` and return
