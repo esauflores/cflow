@@ -49,7 +49,9 @@ one port (`PORT`), with `index.html` for client-side routes.
 There are no migrations: on start, auth and every plugin (the ledger
 included) create their tables with `CREATE TABLE IF NOT EXISTS`, and the
 built-in categories are seeded into an empty database. By
-default the database is `data/cflow.db` at the repo root; back it up by copying the file.
+default the database is `data/cflow.db` at the repo root. It runs in WAL mode, so recent writes
+can sit in `cflow.db-wal` next to it: back up the whole `data/` folder, ideally with the server
+stopped.
 
 ```sh
 mise run check        # vp check: format, lint and type-check the API and the web app
@@ -70,8 +72,13 @@ database at `/data/cflow.db` (the image sets `DATABASE_PATH`).
 `compose.yaml` declares the service, its variables (plain values:
 `APP_TIMEZONE`, `SESSION_TTL_DAYS`, `ALLOW_GUEST`, `CFLOW_PLUGINS`), the
 `cflow-data` volume at `/data` and a health check on
-`/health`. Edit the values there. To back up, copy the database out:
-`docker compose cp cflow:/data/cflow.db ./cflow-backup.db`.
+`/health`. Edit the values there. To back up, stop the service and copy the
+database folder out (`cflow.db` with its `-wal` file):
+`docker compose stop && docker compose cp cflow:/data ./cflow-backup && docker compose start`.
+
+Behind a reverse proxy, set `TRUST_PROXY=true`: login and guest limits then
+apply per client (the last `X-Forwarded-For` address) instead of to the proxy.
+Leave it off when clients connect directly, or they could pick their own address.
 
 ## Structure
 
@@ -263,8 +270,8 @@ These changes are intentional:
 - **One account.** Wallets, transfers, stored balances, overdraft checks and
   quick expenses are gone; expenses and incomes are one `transactions` table
   with signed amounts.
-- **No budgets or dashboard yet.** They were ported, then parked to come back
-  as plugins.
+- **No budgets or reports yet.** They were ported, then parked to come back
+  as plugins. The dashboard covers the month's totals and spending by category.
 - **Error codes.** The original answered 404 for a wrong category type. Now
   bad input is 400 and 404 is only for missing records.
 - **Leaner schema.** Columns nothing read are gone: `confidenceScore`,
@@ -272,8 +279,8 @@ These changes are intentional:
   `systemDefined`. Categories must be `INCOME` or `EXPENSE`.
 - **USD only, for now.** Transactions keep a `currency` column, which
   defaults to `USD` and is optional in requests, but `USD` is the only
-  accepted value, so multi-currency support can come later as a plugin by extending
-  `CURRENCIES` in `api/src/plugins/ledger/transactions.ts`.
+  accepted value. Multi-currency support would start by extending `CURRENCIES`
+  in `api/src/plugins/ledger/transactions.ts`.
 - **No idempotency keys.** CFlow only tracks money, so a retried request at
   worst records a duplicate you can delete. The `Idempotency-Key` header and
   its table are gone.
