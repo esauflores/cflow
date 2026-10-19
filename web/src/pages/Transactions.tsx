@@ -220,7 +220,7 @@ export function Transactions() {
 
           {/* Count and pager sit with the rows, at the bottom. */}
           {content.length > 0 && (
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t px-4 pt-3 pb-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t px-4 pt-3 pb-1 text-sm text-muted-foreground sm:justify-start">
               <span className="tabular-nums">
                 {t("{from}–{to} of {total}", { from: page * size + 1, to: Math.min((page + 1) * size, total), total })}
               </span>
@@ -254,7 +254,7 @@ function Pagination({
   if (totalPages <= 1) return null;
   const last = totalPages - 1;
   return (
-    <nav className="ml-auto flex items-center gap-1" aria-label={t("Pages")}>
+    <nav className="flex items-center gap-1 sm:ml-auto" aria-label={t("Pages")}>
       <Button
         variant="ghost"
         size="icon-sm"

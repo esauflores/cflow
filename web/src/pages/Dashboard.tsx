@@ -82,7 +82,7 @@ export function Dashboard() {
   }
 
   return (
-    <motion.div className="grid gap-6" variants={stagger} initial="hidden" animate="show">
+    <motion.div className="grid grid-cols-1 gap-6" variants={stagger} initial="hidden" animate="show">
       <motion.div variants={rise} className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-3xl font-semibold tracking-tight">{greeting()}</h2>
@@ -92,7 +92,7 @@ export function Dashboard() {
               : t("Here's where your money stands in {month}.", { month: monthLong(asDate(month)) })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center rounded-lg border bg-card">
             <Button
               variant="ghost"
@@ -129,7 +129,7 @@ export function Dashboard() {
 
       <Stats data={data} />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <motion.div variants={rise} className="lg:col-span-2">
           <IncomeVsSpending data={data} />
         </motion.div>
@@ -166,11 +166,12 @@ function Change({ value }: { value: number | null }) {
 function StatCard({ label, children, footer }: { label: string; children: ReactNode; footer: ReactNode }) {
   return (
     <motion.div variants={rise}>
-      <Card className="h-full gap-2">
-        <CardContent className="grid gap-2">
-          <div className="text-sm font-medium">{label}</div>
-          <div className="text-3xl font-semibold tracking-tight">{children}</div>
-          <div className="text-sm">{footer}</div>
+      {/* Two by two on phones: tighter padding and a smaller amount, so "$107,456.83" fits half the width. */}
+      <Card className="h-full gap-2 [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(4)]">
+        <CardContent className="grid gap-1.5 sm:gap-2">
+          <div className="text-xs font-medium sm:text-sm">{label}</div>
+          <div className="text-lg font-semibold tracking-tight min-[400px]:text-xl sm:text-3xl">{children}</div>
+          <div className="text-xs sm:text-sm">{footer}</div>
         </CardContent>
       </Card>
     </motion.div>
@@ -181,7 +182,7 @@ function Stats({ data }: { data: Summary | undefined }) {
   const net = data ? data.current.income - data.current.spending : 0;
   const saved = data && data.current.income > 0 ? Math.round((net / data.current.income) * 1000) / 10 : null;
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
       <StatCard
         label={t("Balance")}
         footer={
@@ -469,19 +470,20 @@ function MonthRing({ data }: { data: Summary | undefined }) {
         </div>
         {data && (change !== null || top) && (
           <p className="rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+            {/* One sentence per line. */}
             {change !== null && (
-              <>
+              <span className="block">
                 {t("You're spending")}{" "}
                 <span className={change > 0 ? "text-destructive" : "text-emerald-500"}>
                   {Math.abs(change)}% {change > 0 ? t("more") : t("less")}
                 </span>{" "}
-                {t("than {month}.", { month: monthOnly(asDate(data.previous.month)) })}{" "}
-              </>
+                {t("than {month}.", { month: monthOnly(asDate(data.previous.month)) })}
+              </span>
             )}
             {top && (
-              <>
+              <span className="block">
                 <span className="text-foreground">{t(top.name)}</span> {t("is your biggest category.")}
-              </>
+              </span>
             )}
           </p>
         )}

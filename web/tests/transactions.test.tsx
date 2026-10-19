@@ -214,7 +214,9 @@ describe("dashboard", () => {
     expect(screen.getByText("-49.9%")).toBeDefined(); // spending vs last month
     expect(screen.getByText("Net this month").parentElement?.textContent).toContain("75% of income saved");
     expect(screen.getByText("Where it went").closest("[data-slot=card]")?.textContent).toContain("Food$200.5080%");
-    expect(screen.getByText(/is your biggest category/).textContent).toContain("49.9% less than February");
+    expect(screen.getByText(/is your biggest category/).closest("p")?.textContent).toContain(
+      "49.9% less than February",
+    );
     expect(calls.find((c) => c.key === "GET /summary")?.url).toMatch(/^\/api\/summary\?month=\d{4}-\d{2}$/);
   });
 

@@ -41,7 +41,7 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : String
 export function Settings() {
   const active = useActiveSection();
   return (
-    <div className="grid gap-6 md:grid-cols-[11rem_1fr] md:items-start">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-[11rem_1fr] md:items-start">
       <div className="md:sticky md:top-8">
         <p className="mb-3 hidden text-sm text-muted-foreground md:block">
           {t("Manage your categories, preferences and account security.")}
@@ -72,7 +72,7 @@ export function Settings() {
           ))}
         </nav>
       </div>
-      <div className="isolate grid gap-6">
+      <div className="isolate grid grid-cols-1 gap-6">
         <Preferences />
         <Categories />
         <Security />
