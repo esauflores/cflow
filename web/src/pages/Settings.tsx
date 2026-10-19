@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, Lock, LogOut, Pencil, Trash2, X } from "lucide-react";
 import { motion } from "motion/react";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Button } from "@web/components/ui/button.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@web/components/ui/card.tsx";
@@ -39,7 +39,7 @@ const FALLBACK_CATEGORY = "Other";
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 export function Settings() {
-  const active = useActiveSection();
+  const [active, select] = useActiveSection();
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-[11rem_1fr] md:items-start">
       <div className="md:sticky md:top-8">
@@ -53,10 +53,11 @@ export function Settings() {
               href={`#${id}`}
               onClick={(event) => {
                 event.preventDefault();
+                select(id);
                 document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
               className={cn(
-                "relative rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap outline-none transition-colors",
+                "relative rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap outline-none transition-colors focus-visible:bg-muted/60 focus-visible:text-foreground",
                 active === id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -72,7 +73,8 @@ export function Settings() {
           ))}
         </nav>
       </div>
-      <div className="isolate grid grid-cols-1 gap-6">
+      {/* Some room after the last section, so the lower sections can scroll up nearer the top. */}
+      <div className="isolate grid grid-cols-1 gap-6 pb-16 md:pb-40">
         <Preferences />
         <Categories />
         <Security />
@@ -81,15 +83,20 @@ export function Settings() {
   );
 }
 
-/** The section at the reference line, for the sub-navigation highlight. Tracks
- * vertical scroll (and therefore clicks, which scroll the section into view). */
-function useActiveSection(): string {
+/**
+ * The section at the reference line, for the sub-navigation highlight, and `select` for a click. A
+ * clicked section stays highlighted until the user scrolls themselves: on a page too short to bring it
+ * to the top, the scroll position alone would keep pointing at the last section.
+ */
+function useActiveSection(): [string, (id: string) => void] {
   const [active, setActive] = useState<string>(SECTIONS[0].id);
+  const clicked = useRef<string | null>(null);
   useEffect(() => {
     let frame = 0;
 
     const update = () => {
       frame = 0;
+      if (clicked.current) return;
       // At the bottom the last section may never reach the line; pick it anyway. Only on a page that
       // scrolls: one that fits the window (e.g. while categories are still loading) is "at the bottom" too.
       const { scrollHeight } = document.documentElement;
@@ -114,9 +121,17 @@ function useActiveSection(): string {
       if (!frame) frame = requestAnimationFrame(update);
     };
 
+    // The user's own scrolling (not the smooth scroll a click starts) hands the highlight back.
+    const release = () => {
+      clicked.current = null;
+      onScroll();
+    };
+    const userScroll = ["wheel", "touchmove", "keydown"] as const;
+
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    for (const type of userScroll) window.addEventListener(type, release, { passive: true });
     // Content growing (categories arriving, a row added) moves the sections without any scroll event.
     const observer = new ResizeObserver(onScroll);
     observer.observe(document.body);
@@ -124,10 +139,15 @@ function useActiveSection(): string {
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      for (const type of userScroll) window.removeEventListener(type, release);
       observer.disconnect();
     };
   }, []);
-  return active;
+  const select = (id: string) => {
+    clicked.current = id;
+    setActive(id);
+  };
+  return [active, select];
 }
 
 function Section({
@@ -183,7 +203,7 @@ function Preferences() {
                 aria-checked={choice === option}
                 onClick={() => setTheme(option)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-sm font-medium outline-none transition-colors",
+                  "rounded-md px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:bg-background/60 focus-visible:text-foreground",
                   choice === option
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -218,7 +238,7 @@ function LanguageChoice() {
             aria-checked={language === option}
             onClick={() => chooseLanguage(option)}
             className={cn(
-              "rounded-md px-3 py-1 text-sm font-medium outline-none transition-colors",
+              "rounded-md px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:bg-background/60 focus-visible:text-foreground",
               language === option
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",

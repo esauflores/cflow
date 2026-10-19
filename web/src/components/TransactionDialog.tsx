@@ -169,7 +169,7 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => switchType(option)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-colors outline-none",
+                "flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-colors outline-none focus-visible:bg-background/60 focus-visible:text-foreground",
                 type === option
                   ? cn("bg-background shadow-sm", TONE[option].text)
                   : "text-muted-foreground hover:text-foreground",
@@ -227,7 +227,11 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t("Category")}</span>
-            <Link to="/settings" onClick={onDone} className="text-xs font-medium text-primary hover:underline">
+            <Link
+              to="/settings"
+              onClick={onDone}
+              className="rounded-sm text-xs font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
+            >
               {t("Manage")}
             </Link>
           </div>

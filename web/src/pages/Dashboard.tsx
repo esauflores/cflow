@@ -356,7 +356,10 @@ function RecentActivity({ onOpen }: { onOpen: (transaction: Transaction) => void
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{t("Recent activity")}</CardTitle>
-        <Link to="/transactions" className="text-sm font-medium text-primary hover:underline">
+        <Link
+          to="/transactions"
+          className="rounded-sm text-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
+        >
           {t("See all")}
         </Link>
       </CardHeader>
@@ -365,7 +368,8 @@ function RecentActivity({ onOpen }: { onOpen: (transaction: Transaction) => void
           <p className="py-6 text-center text-sm text-muted-foreground">{t("No transactions yet.")}</p>
         )}
         {/* popLayout takes the row that drops off out of the flow at once, so the card never grows. */}
-        <ul className="relative divide-y overflow-hidden">
+        {/* Widened by the rows' padding, so a focused or hovered row's background reaches past the text. */}
+        <ul className="relative -mx-2 divide-y overflow-hidden">
           <AnimatePresence initial={false} mode="popLayout">
             {recent.data?.content.slice(0, 5).map((tx) => (
               <motion.li
@@ -382,7 +386,7 @@ function RecentActivity({ onOpen }: { onOpen: (transaction: Transaction) => void
                 <button
                   type="button"
                   onClick={() => onOpen(tx)}
-                  className="group flex w-full items-center gap-3 py-2.5 text-left"
+                  className="group flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/80"
                 >
                   <span
                     className="flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold transition-transform group-hover:scale-105"
