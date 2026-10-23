@@ -37,10 +37,17 @@ such as `"-12.50"`. Dates are `YYYY-MM-DD`.
 
 ## Routes
 
-Everything under `/api` except `/api/auth` needs a session. `GET /health` is open.
+`GET /api/health`, `GET /api/openapi.json` and the i18n routes under `/api/plugins/i18n` are open.
+`/api/auth/status`, `/bootstrap`, `/login` and `/guest` are open too; `/api/auth/logout` and
+`/api/auth/change-password` need a session. Everything else needs a session, and guests may only read.
+
+Besides the login limits above, every client gets `RATE_LIMIT` requests a minute at the API's edge (300 by
+default; `/api/health` is exempt). A body over `MAX_BODY_BYTES` answers 413.
 
 | Route                                    | Does                                                                                                                                     |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`                        | Liveness check, reads the database too; used by Docker's health check                                                                    |
+| `GET /api/openapi.json`                  | The OpenAPI 3.1 document generated from the route schemas                                                                                |
 | `GET /balance`                           | The sum of every transaction                                                                                                             |
 | `GET /summary?month=YYYY-MM`             | The dashboard: balance, the month's totals and the previous month's, every month of its year, spending by category (default: this month) |
 | `GET /transactions`                      | Paged list; filters `query` (title, category or amount), `type` (`INCOME`/`EXPENSE`), `categoryId`; sorts `date`, `amount`, `createdAt`  |

@@ -1,0 +1,5 @@
+# In dev, when server.ts serves web/index.html, Bun's bundler builds it and runs Tailwind on its CSS as a plugin. Bun
+# reads this file from the folder it runs in, so `bun run dev` runs from server/. The production build passes the
+# plugin itself (build.ts).
+[serve.static]
+plugins = ["bun-plugin-tailwind"]

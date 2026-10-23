@@ -1,0 +1,4 @@
+# Run package binaries (like vp, whose shebang asks for Node) on Bun, the runtime the app itself runs on, whether or
+# not Node is installed. Applies to `bun run <script>` and `bun <bin>`.
+[run]
+bun = true

@@ -1,0 +1,23 @@
+{
+  // The settings every package shares (server/ and apps/), each extends it. @api/* is the API's own imports: the server and web
+  // load the API's source through the "api" package, so they resolve those imports too.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "Preserve",
+    "paths": {
+      "@api/*": ["./apps/api/src/*"],
+      "@web/*": ["./apps/web/src/*"]
+    },
+    "types": ["bun"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}

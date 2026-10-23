@@ -1,76 +1,84 @@
 # Architecture
 
-The repo is one package: a single `package.json`, `node_modules` and `vite.config.ts` at the root.
-`api/` and `web/` are source folders, each with its own `tsconfig.json` (server types vs. DOM and
-JSX). Imports use `@api/` (`api/src`) and `@web/` (`web/src`).
+The repo is a Bun workspace: `apps/api` (the Hono API), `apps/web` (the React page) and `server/` (Bun.serve, which
+puts both on one port). The root holds the tooling, the scripts and the shared TypeScript settings. Imports use
+`@api/` (`apps/api/src`) and `@web/` (`apps/web/src`).
 
 ```
-package.json              dependencies and scripts: check, knip, test, dev, build, start
-vite.config.ts            format and lint rules, aliases, dev server, build, api and web test projects
-api/
+package.json              workspaces and scripts: dev, build, start, check, test, db:generate
+vite.config.ts            format, lint, aliases, api/server/web test projects
+tsconfig.json             shared settings and the @api/@web paths
+server/
+  src/server.ts           Bun.serve: /api to the API, everything else to the web page
+  src/page.ts             serves the bundled page from memory, with gzip and cache headers
+  build.ts                production bundle into server/dist
+apps/api/
   src/
-    core/                 the kernel: config and clock (deps.ts), database (db.ts), HTTP envelope and
-                          errors (http.ts), route registry (kernel.ts), auth/, money and date helpers
-    plugins/              the plugin contract (api.ts), the list of plugins (index.ts), which ones
-                          CFLOW_PLUGINS enables (loader.ts), and one folder per plugin: core/
-    app.ts                composition root: plugin host, plugins, Hono app
-    node.ts               production entry: database, server, graceful shutdown
-    dev.ts                development entry, loaded by the dev server
-  tests/                  core/, plugins/ (core/ for the core plugin; fixtures/notes exercises the
-                          whole plugin contract), support/ (in-memory database, test clock, logged-in client),
-                          architecture.test.ts
-web/
+    core/                 config and clock, database (Drizzle), error envelope, OpenAPI router,
+                          money and date helpers, rate limit, logger
+    modules/
+      auth/               the server password, sessions and guest sessions
+      ledger/             transactions, categories, balance and the dashboard summary
+      i18n/               Spanish messages for the web app
+    app.ts                composition root: middleware, public routes, the session-checked ledger
+    client.ts             what the web app imports to type its API calls
+  drizzle/                migrations, applied at start
+  tests/
+apps/web/
+  index.html
   src/
     main.tsx              query client, routes, auth gate
-    lib/                  api.ts (client, types, session), i18n.ts (t(), language), utils.ts
-                          (formatting, theme)
-    components/           ui/ (shadcn), Charts.tsx (plain SVG and Motion), Shell, TransactionDialog,
-                          DatePicker, Logo, Money
+    lib/                  api.ts (client, types, session), i18n.ts, utils.ts (formatting, theme)
+    components/           ui/ (shadcn), Charts, Shell, TransactionDialog, DatePicker, Logo, Money
     pages/                Login, Dashboard, Transactions, Settings
-  tests/                  API client, auth gate, transactions page
+    styles/global.css     Tailwind and the theme tokens
+  tests/
 ```
 
 ## One process, one port
 
-In development, `mise run dev` runs Vite with `@hono/vite-dev-server`: `/api` goes to the Hono app in
-`api/src/dev.ts` and Vite serves the rest, so the browser talks to one origin and needs no CORS.
-Editing an API file reloads the API.
+In development, `bun run dev` runs `server/src/server.ts` with Bun's hot reload. Bun bundles `apps/web/index.html` as
+it is requested, rebundles on change and hot-reloads the page; editing an API file reloads the API. `/api` and
+`/api/*` go to `createApp()` from the `api` workspace, everything else is the page, which answers any path with its
+`index.html` so client-side routes load. The browser talks to one origin and needs no CORS.
 
-In production, `bun run build` builds the web app into `web/dist/` and bundles the server from
-`api/src/node.ts` into `dist/server.mjs`, with dependencies left external. `bun dist/server.mjs` then
-serves `/api` and `/health` from the API and everything else from `web/dist`, falling back to
-`index.html` for client-side routes.
+In production, `bun run build` bundles `server/src/server.ts` with everything it imports — the API and the page — into
+`server/dist/`. The page becomes hashed JS and CSS files, gzipped, which `server/src/page.ts` reads once at start. The
+API's migrations are copied to `server/dist/drizzle/`, where `core/db.ts` finds them from the bundled server and applies
+them at start. Run the build from `server/dist` (`bun run start` does).
 
-## Kernel and plugins
+## Core and modules
 
-CFlow is a small kernel plus plugins, on
-[`@esauflores/plugin-sdk`](https://github.com/esauflores/plugin-sdk). The kernel owns config, the
-database connection, the HTTP envelope and authentication: `app.ts` mounts `/api/auth` and puts every
-plugin route behind the session check.
+`apps/api/src/core` is the kernel: configuration, the database connection, the HTTP error envelope, the OpenAPI
+router, the clock, money and date helpers, and rate limiting. `apps/api/src/modules` holds the features:
 
-Everything else is a plugin, living in `api/src/plugins/<name>/` and enabled by `CFLOW_PLUGINS`. The
-`core` plugin is required and registered first: in `setup` it creates its tables (a new database gets
-the default categories), mounts its routes, and provides its facade as the `ledger` service. Other
-plugins go through the same host (see [plugins](plugins.md)).
+```
+modules/
+  auth/     auth.routes.ts, auth.service.ts, auth.schemas.ts, auth.table.ts
+  ledger/   ledger.routes.ts, transactions.*, categories.*, *.table.ts
+  i18n/     i18n.routes.ts, es.ts
+```
 
-The core plugin is four files: `index.ts` (the plugin and its public exports), `facade.ts` (the `ledger`
-service), and `categories.ts` and `transactions.ts`, each holding its queries and routes. Writes go
-through `createTransaction`, `updateTransaction` and `deleteTransaction`, which raise a hook after the
-commit.
+`app.ts` mounts `/api/auth` and (when enabled) `/api/plugins/i18n` as public routes. It then puts the ledger routes
+behind `requireSession`, which reads the bearer token and rejects guests on any write. `CFLOW_PLUGINS` chooses which
+modules run; `core` is required and `i18n` is optional.
 
-`api/tests/architecture.test.ts` enforces the layering:
+## Typed routes
 
-1. `core/` never imports from `plugins/`.
-2. Plugins (one folder each under `plugins/`) import each other only through `index.ts`.
-3. The plugin dependency graph has no cycles.
+Every route is declared with `createRoute` from `@hono/zod-openapi`: path, params, query, body and responses are Zod
+schemas. The router's `defaultHook` turns invalid input into CFlow's `400 { success: false, message, code, errors }`
+envelope before the handler runs. The routes are published at `/api/openapi.json`; `apps/api/src/client.ts` exports
+`AppType` so the web app can use Hono's typed client without importing the API's code.
+
+The web app currently calls the API through `apps/web/src/lib/api.ts`, which unwraps the `{ success, data }` envelope
+and raises a translated `ApiError`. Its types mirror the schemas.
 
 ## Data
 
-There is one account. A transaction's `amount` is signed (negative is money out), its category must
-match that direction, and the balance is the sum of every transaction, so it is never stored and may
-go negative. Money is stored as integer cents and dates as `YYYY-MM-DD` text.
+The database is SQLite from Bun (`bun:sqlite`), in the process, through Drizzle. It runs in WAL mode, with
+`foreign_keys = ON`; `core/db.ts` fails at start if a pragma did not take. Each module declares its tables in
+`<module>.table.ts`. `bun run db:generate` writes a migration into `apps/api/drizzle/`; the server applies the
+migrations not yet applied when it starts, so a fresh database or an older one reaches the current schema.
 
-There are no migrations: on start, auth and every plugin create their tables with
-`CREATE TABLE IF NOT EXISTS`. Each table is defined once, as the `CREATE TABLE` statement in the file
-that queries it (e.g. `TRANSACTIONS_TABLE` in `plugins/core/transactions.ts`). The database runs in WAL mode,
-so reads don't wait behind a write.
+Amounts are signed integer cents (negative is money out); calendar dates are `YYYY-MM-DD` text; instants are epoch
+milliseconds. `APP_TIMEZONE` decides what "today" means for future-date checks.

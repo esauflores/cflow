@@ -1,19 +1,12 @@
-[env]
-_.file = ".env"
-
 [tools]
 bun = "1.4"
 
 [tasks.check]
-description = "vp check: format, lint and type-check the API and the web app"
+description = "vp check: format, lint and type-check the API, the web app and the server"
 run = "bun run check"
 
 [tasks.check-fix]
 run = "bun run check:fix"
-
-[tasks.knip]
-description = "knip: unused files, exports and dependencies, including exports only tests use"
-run = "bun run knip"
 
 [tasks.test]
 run = "bun run test"
@@ -23,9 +16,13 @@ description = "Run the API and the web app together, with reload"
 run = "bun run dev"
 
 [tasks.build]
-description = "Build the web app into web/dist"
+description = "Bundle the server, the API and the web app into server/dist"
 run = "bun run build"
 
 [tasks.start]
-description = "Build the web app and run CFlow in production mode (one port)"
+description = "Build, then serve CFlow in production mode (one port)"
 run = "bun run start"
+
+[tasks.db-generate]
+description = "Write a migration for the tables changed since the last one"
+run = "bun run db:generate"

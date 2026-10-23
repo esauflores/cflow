@@ -1,8 +1,12 @@
 node_modules/
 .vitest/
 coverage/
+dist/
+data/*
+!data/.gitkeep
+server/data/
+*.log
+
 .env
 .env.*
 !.env.example
-data/
-dist/

@@ -17,7 +17,7 @@ CFlow started as a port of the [BFlow Financial Engine](https://github.com/Diazz
   `EXPENSE`.
 - **USD only, for now.** Transactions keep a `currency` column, which defaults to `USD` and is optional
   in requests, but `USD` is the only accepted value. Multi-currency support would start by extending
-  `CURRENCIES` in `api/src/plugins/core/transactions.ts`.
+  `CURRENCIES` in `apps/api/src/modules/ledger/transactions.schemas.ts`.
 - **No idempotency keys.** CFlow only tracks money, so a retried request at worst records a duplicate
   you can delete. The `Idempotency-Key` header and its table are gone.
 - **A slimmer envelope.** Successful responses are `{ success, data }`, without the original

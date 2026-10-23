@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // web/ repeats the paths relative to itself, as shadcn reads them from here to place new components.
+    "paths": {
+      "@api/*": ["../api/src/*"],
+      "@web/*": ["./src/*"]
+    },
+    "types": [],
+    "jsx": "react-jsx"
+  },
+  "include": ["src", "tests"]
+}

@@ -6,16 +6,18 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8080:3000"
     environment:
+      PORT: 3000
+      DATABASE_PATH: /data/cflow.db
       APP_TIMEZONE: UTC
       SESSION_TTL_DAYS: "30"
       ALLOW_GUEST: "false"
-      CFLOW_PLUGINS: core
+      CFLOW_PLUGINS: core,i18n
     volumes:
       - cflow-data:/data
     healthcheck:
-      test: bun -e "if (!(await fetch('http://localhost:8080/health')).ok) process.exit(1)"
+      test: bun -e "if (!(await fetch('http://127.0.0.1:3000/api/health')).ok) process.exit(1)"
       interval: 30s
       timeout: 3s
       start_period: 10s
