@@ -76,7 +76,8 @@ export function Dashboard() {
   const guest = useGuest();
 
   function openDialog(transaction?: Transaction) {
-    if (guest) return;
+    // Guests may open the form for a new transaction, but not edit an existing one.
+    if (guest && transaction) return;
     setEditing(transaction);
     setDialogOpen(true);
   }
@@ -113,11 +114,9 @@ export function Dashboard() {
               <ChevronRight />
             </Button>
           </div>
-          {!guest && (
-            <Button onClick={() => openDialog()}>
-              <Plus /> {t("New transaction")}
-            </Button>
-          )}
+          <Button onClick={() => openDialog()}>
+            <Plus /> {t("New transaction")}
+          </Button>
         </div>
       </motion.div>
 

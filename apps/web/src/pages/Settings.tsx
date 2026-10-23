@@ -305,6 +305,10 @@ function CategoryColumn({
 
   async function add(event: FormEvent) {
     event.preventDefault();
+    if (readOnly) {
+      setError(t("This is a demo. Changes can't be saved."));
+      return;
+    }
     setError(null);
     try {
       await api.categories.create({ name: name.trim(), type });
@@ -328,24 +332,22 @@ function CategoryColumn({
           </li>
         ))}
       </ul>
-      {!readOnly && (
-        <form onSubmit={add} className="flex gap-2">
-          <Input
-            placeholder={placeholder}
-            aria-label={placeholder}
-            maxLength={50}
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setError(null);
-            }}
-            required
-          />
-          <Button type="submit" variant="outline">
-            {t("Add")}
-          </Button>
-        </form>
-      )}
+      <form onSubmit={add} className="flex gap-2">
+        <Input
+          placeholder={placeholder}
+          aria-label={placeholder}
+          maxLength={50}
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError(null);
+          }}
+          required
+        />
+        <Button type="submit" variant="outline">
+          {t("Add")}
+        </Button>
+      </form>
       <Message error={error} />
     </div>
   );

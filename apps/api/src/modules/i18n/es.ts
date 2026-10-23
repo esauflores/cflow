@@ -75,6 +75,7 @@ export const es: Record<string, string> = {
   Save: "Guardar",
   "Add expense": "Agregar gasto",
   "Add income": "Agregar ingreso",
+  "This is a demo. Changes can't be saved.": "Esta es una demo. Los cambios no se pueden guardar.",
   Delete: "Eliminar",
   "Confirm delete": "Confirmar",
   Press: "Pulsa",

@@ -57,7 +57,8 @@ export function Transactions() {
   }
 
   function openDialog(transaction?: Transaction) {
-    if (guest) return;
+    // Guests may open the form for a new transaction, but not edit an existing one.
+    if (guest && transaction) return;
     setEditing(transaction);
     setDialogOpen(true);
   }
@@ -66,11 +67,9 @@ export function Transactions() {
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-3xl font-semibold tracking-tight">{t("Transactions")}</h2>
-        {!guest && (
-          <Button onClick={() => openDialog()}>
-            <Plus /> {t("Add")}
-          </Button>
-        )}
+        <Button onClick={() => openDialog()}>
+          <Plus /> {t("Add")}
+        </Button>
       </div>
 
       {list.isError ? (

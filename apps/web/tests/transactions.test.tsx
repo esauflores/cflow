@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { createQueryClient, getToken, setToken, type Transaction } from "@web/lib/api.ts";
+import { createQueryClient, getToken, setGuest, setToken, type Transaction } from "@web/lib/api.ts";
 import { today } from "@web/lib/utils.ts";
 import { Dashboard } from "@web/pages/Dashboard.tsx";
 import { AuthGate } from "@web/pages/Login.tsx";
@@ -145,6 +145,30 @@ describe("transactions page", () => {
       date: today(),
       categoryId: "c1",
     });
+  });
+
+  it("lets a guest open the add form but doesn't save", async () => {
+    setGuest(true);
+    const calls = mockApi({
+      "GET /transactions": () => ({ body: pageOf([]) }),
+      "GET /categories": () => ({ body: [tacos.category] }),
+    });
+    renderWithClient(
+      <MemoryRouter>
+        <Transactions />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("No transactions yet.");
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    const amount = (await screen.findByLabelText("Amount")) as HTMLInputElement;
+    fireEvent.change(amount, { target: { value: "12.5" } });
+    fireEvent.change(screen.getByLabelText("What was it for?"), { target: { value: "Tacos" } });
+    fireEvent.click(await screen.findByRole("radio", { name: "Food" }));
+    fireEvent.submit(screen.getByLabelText("What was it for?").closest("form")!);
+
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", "This is a demo. Changes can't be saved.");
+    expect(calls.some((c) => c.key === "POST /transactions")).toBe(false);
   });
 });
 

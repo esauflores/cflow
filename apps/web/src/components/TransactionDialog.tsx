@@ -8,7 +8,14 @@ import { Button } from "@web/components/ui/button.tsx";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@web/components/ui/dialog.tsx";
 import { Input } from "@web/components/ui/input.tsx";
 import { Label } from "@web/components/ui/label.tsx";
-import { api, type CategoryType, type Transaction, useCategories, useInvalidateLedger } from "@web/lib/api.ts";
+import {
+  api,
+  type CategoryType,
+  type Transaction,
+  useCategories,
+  useGuest,
+  useInvalidateLedger,
+} from "@web/lib/api.ts";
 import { t } from "@web/lib/i18n.ts";
 import { cn, dayBefore, today } from "@web/lib/utils.ts";
 
@@ -56,6 +63,7 @@ export function TransactionDialog({
 
 function TransactionForm({ transaction, onDone }: { transaction?: Transaction; onDone: () => void }) {
   const categories = useCategories();
+  const guest = useGuest();
   const invalidate = useInvalidateLedger();
   const [type, setType] = useState<CategoryType>(transaction?.type ?? "EXPENSE");
   const [amount, setAmount] = useState(transaction ? String(Math.abs(transaction.amount)) : "");
@@ -134,6 +142,10 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
   function submit(event: FormEvent) {
     event.preventDefault();
     if (status !== "idle") return;
+    if (guest) {
+      setError(t("This is a demo. Changes can't be saved."));
+      return;
+    }
     const value = Number(amount);
     if (!(value > 0)) {
       setError(t("Enter an amount above 0"));
@@ -304,6 +316,10 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
               {confirmingDelete ? t("Confirm delete") : t("Delete")}
             </SwapLabel>
           </Button>
+        ) : guest ? (
+          <span className="hidden text-xs text-muted-foreground sm:inline">
+            {t("This is a demo. Changes can't be saved.")}
+          </span>
         ) : (
           <span className="hidden text-xs text-muted-foreground sm:inline">
             {t("Press")} <kbd className="rounded border bg-muted px-1 font-sans">Enter</kbd> {t("to save")}
