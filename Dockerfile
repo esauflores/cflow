@@ -27,17 +27,18 @@ COPY --from=build /app/server/dist ./
 
 # The database lives in /data (core/db.ts's default), so it outlives the container when a volume is mounted there:
 # `-v cflow-data:/data` with Docker, or a Railway volume attached at /data. No Dockerfile VOLUME: Railway rejects the
-# instruction, and Compose and Docker take the mount as a flag or a service setting anyway.
+# instruction, and Docker takes the mount as a flag anyway.
 RUN mkdir /data && chown bun:bun /data
 
 # The image runs behind a reverse proxy (see the README), so the API's rate limit counts the client IP the proxy adds
 # to X-Forwarded-For, not the proxy's. Override with -e TRUST_PROXY=false when nothing is in front.
 ENV TRUST_PROXY=true
 
+# The container runs as bun. On Railway, set RAILWAY_RUN_UID=0 so it can write to the root-owned volume at /data.
 USER bun
 EXPOSE 3000
 
-# Docker marks the container unhealthy when /api/health stops answering (Compose and Swarm can then restart it), on
+# Docker marks the container unhealthy when /api/health stops answering (a platform can then restart it), on
 # the port the server listens on, through Bun's fetch, as slim has no wget or curl. The health check isn't rate-limited.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD bun -e "const r = await fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health'); process.exit(r.ok ? 0 : 1)"

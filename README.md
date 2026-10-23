@@ -29,14 +29,18 @@ CFlow is built on the `bun-fullstack-base` template: one Bun process, a Hono API
 With Docker:
 
 ```sh
-docker compose up -d          # http://localhost:8080
+docker build -t cflow .
+docker run -d --name cflow -p 8080:3000 -v cflow-data:/data cflow   # http://localhost:8080
 ```
 
 The database lives in the `cflow-data` volume at `/data/cflow.db`. To back it up, copy the whole folder: the database
 runs in WAL mode, so recent writes can sit in `cflow.db-wal`.
 
+On Railway, attach the volume at `/data` and set `RAILWAY_RUN_UID=0`: Railway mounts volumes root-owned, and the image
+runs as `bun` by default.
+
 ```sh
-docker compose stop && docker compose cp cflow:/data ./cflow-backup && docker compose start
+docker stop cflow && docker cp cflow:/data ./cflow-backup && docker start cflow
 ```
 
 For development ([mise](https://mise.jdx.dev) installs Bun):
@@ -65,7 +69,7 @@ absolute path.
 
 ## Configuration
 
-Environment variables, read from `.env` in development and from `compose.yaml` in Docker:
+Environment variables, read from `.env` in development and from `docker run -e` in Docker:
 
 | Variable           | Default          | Meaning                                                                     |
 | ------------------ | ---------------- | --------------------------------------------------------------------------- |
