@@ -69,7 +69,7 @@ export function Money({
   const [w, c] = splitMoney(amount);
   return (
     // inline-block + contain: a number changing every frame of a count-up only re-lays-out itself, not its card.
-    <span className={cn("inline-block tabular-nums [contain:layout_paint]", className)}>
+    <span className={cn("inline-block tabular-nums contain-[layout_paint]", className)}>
       {signed && amount > 0 ? "+" : ""}
       <span ref={whole}>{w}</span>
       <span ref={cents} className="opacity-60">
@@ -86,7 +86,7 @@ export function Percent({ value, className }: { value: number; className?: strin
     if (ref.current) ref.current.textContent = `${Math.round(shown)}%`;
   });
   return (
-    <span ref={ref} className={cn("inline-block [contain:layout_paint]", className)}>
+    <span ref={ref} className={cn("inline-block contain-[layout_paint]", className)}>
       {Math.round(value)}%
     </span>
   );
