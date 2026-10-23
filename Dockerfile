@@ -25,10 +25,10 @@ FROM oven/bun:1.4.3-alpine
 WORKDIR /app
 COPY --from=build /app/server/dist ./
 
-# The database lives in /data (core/db.ts's default), a volume, so it outlives the container: mount one there
-# (-v cflow-data:/data).
+# The database lives in /data (core/db.ts's default), so it outlives the container when a volume is mounted there:
+# `-v cflow-data:/data` with Docker, or a Railway volume attached at /data. No Dockerfile VOLUME: Railway rejects the
+# instruction, and Compose and Docker take the mount as a flag or a service setting anyway.
 RUN mkdir /data && chown bun:bun /data
-VOLUME /data
 
 # The image runs behind a reverse proxy (see the README), so the API's rate limit counts the client IP the proxy adds
 # to X-Forwarded-For, not the proxy's. Override with -e TRUST_PROXY=false when nothing is in front.
