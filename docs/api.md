@@ -4,13 +4,14 @@
 
 There are no user accounts. One server password protects the instance:
 
-1. `GET /api/auth/status` returns `{ bootstrapped, allowGuest, plugins }`, where `plugins` lists the
+1. `GET /api/auth/status` returns `{ bootstrapped, demoMode, plugins }`, where `plugins` lists the
    enabled ones.
 2. `POST /api/auth/bootstrap { password }` runs once: it sets the password and returns a session.
 3. `POST /api/auth/login { password }` returns `{ token, expiresAt, guest }`. After 5 failed attempts
    in 15 minutes from one client it answers 429 with `Retry-After`.
-4. `POST /api/auth/guest` returns a read-only session when `ALLOW_GUEST` is on (10 per client every
-   15 minutes). Guests can read everything and change nothing.
+4. `POST /api/auth/guest` returns a read-only session when `DEMO_MODE` is on (10 per client every
+   15 minutes). Guests can read everything and change nothing. The web app's `/demo` route calls this
+   automatically when `DEMO_MODE` is on.
 5. Send `Authorization: Bearer <token>` on every other request.
 6. `POST /api/auth/logout` ends the session. `POST /api/auth/change-password
    { currentPassword, newPassword }` changes the password and ends every other session.

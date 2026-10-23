@@ -81,7 +81,7 @@ export interface Summary {
 
 export interface ServerStatus {
   bootstrapped: boolean;
-  allowGuest: boolean;
+  demoMode: boolean;
   /** Enabled plugins, by name. */
   plugins: string[];
 }

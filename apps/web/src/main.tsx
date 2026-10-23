@@ -22,6 +22,8 @@ const router = createBrowserRouter([
     element: <Shell />,
     children: [
       { index: true, element: <Dashboard />, handle: { title: "Dashboard" } satisfies RouteHandle },
+      // `/demo` has already opened a guest session by the time the router mounts; show the dashboard.
+      { path: "demo", element: <Navigate to="/" replace /> },
       { path: "transactions", element: <Transactions />, handle: { title: "Transactions" } satisfies RouteHandle },
       { path: "settings", element: <Settings />, handle: { title: "Settings" } satisfies RouteHandle },
       { path: "*", element: <Navigate to="/" replace /> },

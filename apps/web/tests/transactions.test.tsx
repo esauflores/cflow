@@ -40,7 +40,7 @@ afterEach(() => {
 describe("auth gate", () => {
   it("asks for a new password on a fresh server and enters the app after setup", async () => {
     const calls = mockApi({
-      "GET /auth/status": () => ({ body: { bootstrapped: false, allowGuest: false, plugins: ["core"] } }),
+      "GET /auth/status": () => ({ body: { bootstrapped: false, demoMode: false, plugins: ["core"] } }),
       "POST /auth/bootstrap": () => ({ status: 201, body: { token: "new-token", expiresAt: "2026-05-01T00:00:00Z" } }),
     });
     renderWithClient(
@@ -61,7 +61,7 @@ describe("auth gate", () => {
 
   it("shows the API's error for a wrong password", async () => {
     mockApi({
-      "GET /auth/status": () => ({ body: { bootstrapped: true, allowGuest: false, plugins: ["core"] } }),
+      "GET /auth/status": () => ({ body: { bootstrapped: true, demoMode: false, plugins: ["core"] } }),
       "POST /auth/login": () => ({ status: 401, body: { code: "INVALID_CREDENTIALS", message: "Invalid password" } }),
     });
     renderWithClient(

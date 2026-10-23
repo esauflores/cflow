@@ -12,7 +12,7 @@ services:
       DATABASE_PATH: /data/cflow.db
       APP_TIMEZONE: UTC
       SESSION_TTL_DAYS: "30"
-      ALLOW_GUEST: "false"
+      DEMO_MODE: "false"
       CFLOW_PLUGINS: core,i18n
     volumes:
       - cflow-data:/data

@@ -62,7 +62,7 @@ export async function login(deps: Deps, password: string): Promise<Session> {
   return createSession(deps, "owner");
 }
 
-/** A read-only session; the caller must have checked `config.allowGuest`. */
+/** A read-only session; the caller must have checked `config.demoMode`. */
 export function guest(deps: Deps): Session {
   return createSession(deps, "guest");
 }

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Logo } from "@web/components/Logo.tsx";
 import { Button } from "@web/components/ui/button.tsx";
@@ -17,8 +17,31 @@ import { t } from "@web/lib/i18n.ts";
 export function AuthGate({ children }: { children: ReactNode }) {
   const token = useToken();
   const status = useQuery({ queryKey: ["auth-status"], queryFn: api.auth.status, enabled: !token });
+  // `/demo` enters with a guest session when the server is a demo (DEMO_MODE=true), without a login.
+  const demo = window.location.pathname.replace(/\/+$/, "") === "/demo";
+  const demoStarted = useRef(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
   // From the login screen on: the browser's language, or the one picked in Settings.
   useLanguageSync();
+
+  useEffect(() => {
+    if (!demo || token || !status.data?.demoMode || demoStarted.current) return;
+    demoStarted.current = true;
+    let cancelled = false;
+    api.auth
+      .guest()
+      .then((session) => {
+        if (cancelled) return;
+        setToken(session.token);
+        setGuest(session.guest);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setDemoError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [demo, token, status.data?.demoMode]);
 
   if (token) return children;
   // One screen for "checking the server" and the form, so the logo mounts (and draws) once instead of
@@ -32,14 +55,29 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <p role="alert" className="text-sm text-destructive">
           {status.error.message}
         </p>
+      ) : demo && status.data && !status.data.demoMode ? (
+        <div className="grid justify-items-center gap-2 text-center">
+          <p className="text-sm text-muted-foreground">{t("The demo is not available on this server.")}</p>
+          <a href="/" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+            {t("Go to sign in")}
+          </a>
+        </div>
+      ) : demo && status.data ? (
+        demoError ? (
+          <p role="alert" className="text-sm text-destructive">
+            {demoError}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("Entering the demo…")}</p>
+        )
       ) : status.data ? (
-        <PasswordForm setup={!status.data.bootstrapped} allowGuest={status.data.allowGuest} />
+        <PasswordForm setup={!status.data.bootstrapped} demoMode={status.data.demoMode} />
       ) : null}
     </main>
   );
 }
 
-function PasswordForm({ setup, allowGuest }: { setup: boolean; allowGuest: boolean }) {
+function PasswordForm({ setup, demoMode }: { setup: boolean; demoMode: boolean }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +169,7 @@ function PasswordForm({ setup, allowGuest }: { setup: boolean; allowGuest: boole
               <Button type="submit" disabled={busy}>
                 {setup ? t("Create server password") : t("Log in")}
               </Button>
-              {allowGuest && !setup && (
+              {demoMode && !setup && (
                 <Button type="button" variant="outline" disabled={busy} onClick={() => void enterAsGuest()}>
                   {t("Enter as guest")}
                 </Button>

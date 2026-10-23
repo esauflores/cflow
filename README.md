@@ -73,7 +73,7 @@ Environment variables, read from `.env` in development and from `compose.yaml` i
 | `DATABASE_PATH`    | `/data/cflow.db` | SQLite file (dev: `../data/cflow.db`; Docker: `/data/cflow.db`)             |
 | `APP_TIMEZONE`     | `UTC`            | Zone that defines "today" for transaction dates                             |
 | `SESSION_TTL_DAYS` | `30`             | How long a login lasts                                                      |
-| `ALLOW_GUEST`      | `false`          | Offer a read-only "Enter as guest" session on the login screen              |
+| `DEMO_MODE`        | `false`          | Serve `/demo` and the read-only "Enter as guest" session at login           |
 | `TRUST_PROXY`      | `false`          | Set behind a reverse proxy, so login limits apply per client, not per proxy |
 | `RATE_LIMIT`       | `300`            | Requests a minute per client at the API's edge; `0` turns it off            |
 | `MAX_BODY_BYTES`   | `1048576`        | Largest request body the API reads                                          |

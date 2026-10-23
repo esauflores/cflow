@@ -141,7 +141,7 @@ export function authRoutes(deps: Deps) {
   const guestRoute = createRoute({
     method: "post",
     path: "/guest",
-    summary: "Enter with a read-only guest session, when ALLOW_GUEST is on",
+    summary: "Enter with a read-only guest session, when DEMO_MODE is on",
     responses: {
       200: json(envelope(SessionSchema), "A guest session"),
       403: errorResponse,
@@ -195,7 +195,7 @@ export function authRoutes(deps: Deps) {
           success: true as const,
           data: {
             bootstrapped: auth.isBootstrapped(deps.db),
-            allowGuest: deps.config.allowGuest,
+            demoMode: deps.config.demoMode,
             // Enabled modules, so the web app can offer what they add (e.g. a language choice).
             plugins: deps.config.plugins,
           },
@@ -221,7 +221,7 @@ export function authRoutes(deps: Deps) {
       }
     })
     .openapi(guestRoute, (c) => {
-      if (!deps.config.allowGuest) throw forbidden("Guest access is disabled");
+      if (!deps.config.demoMode) throw forbidden("Demo mode is disabled");
       if (!auth.isBootstrapped(deps.db)) throw new AppError(409, "CONFLICT", "The server has not been set up yet");
       const key = clientIp(c, deps.config.trustProxy);
       const now = deps.clock.now().getTime();

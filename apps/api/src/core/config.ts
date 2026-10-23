@@ -12,8 +12,8 @@ export interface Config {
   sessionTtlMs: number;
   /** Modules to enable, by name, from CFLOW_PLUGINS (comma-separated; `core` when unset or empty). */
   plugins: string[];
-  /** Whether the login screen offers a read-only guest session (ALLOW_GUEST). */
-  allowGuest: boolean;
+  /** Whether this instance is a public demo: `/demo` and the read-only guest session (DEMO_MODE). */
+  demoMode: boolean;
   /**
    * Whether a reverse proxy sits in front (TRUST_PROXY): the client's address is then the last `X-Forwarded-For`
    * entry, which the proxy appended, rather than the proxy's own address.
@@ -71,7 +71,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     timeZone,
     sessionTtlMs: positiveInt(env, "SESSION_TTL_DAYS", 30) * 24 * HOUR_MS,
     plugins: pluginList(env.CFLOW_PLUGINS),
-    allowGuest: isTrue(env.ALLOW_GUEST),
+    demoMode: isTrue(env.DEMO_MODE),
     trustProxy: isTrue(env.TRUST_PROXY),
     rateLimit: wholeNumber(env, "RATE_LIMIT", 300),
     maxBodyBytes: positiveInt(env, "MAX_BODY_BYTES", 1024 * 1024),

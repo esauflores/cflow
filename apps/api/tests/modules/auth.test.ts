@@ -54,8 +54,8 @@ describe("auth", () => {
     expect(body).toMatchObject({ success: false, code: "UNAUTHORIZED", path: "/api/transactions" });
   });
 
-  it("lets a guest read but not write when ALLOW_GUEST is on", async () => {
-    process.env.ALLOW_GUEST = "true";
+  it("lets a guest read but not write when DEMO_MODE is on", async () => {
+    process.env.DEMO_MODE = "true";
     const { app } = await ownerSession();
     const guest = await app.request("/api/auth/guest", { method: "POST" });
     const body = (await guest.json()) as { data: { token: string; guest: boolean } };
@@ -64,7 +64,7 @@ describe("auth", () => {
 
     expect((await call(app, body.data.token, "GET", "/api/transactions")).status).toBe(200);
     expect((await call(app, body.data.token, "POST", "/api/transactions", {})).status).toBe(403);
-    delete process.env.ALLOW_GUEST;
+    delete process.env.DEMO_MODE;
   });
 
   it("changes the password, ending the other sessions", async () => {

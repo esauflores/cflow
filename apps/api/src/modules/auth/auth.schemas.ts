@@ -18,7 +18,7 @@ export const SessionSchema = z
 export const StatusSchema = z
   .object({
     bootstrapped: z.boolean(),
-    allowGuest: z.boolean(),
+    demoMode: z.boolean(),
     plugins: z.array(z.string()).openapi({ example: ["core", "i18n"] }),
   })
   .openapi("ServerStatus");

@@ -64,7 +64,7 @@ describe("i18n", () => {
     chooseLanguage("es");
     let plugins = ["core", "i18n"];
     mockApi({
-      "GET /auth/status": () => ({ body: { bootstrapped: true, allowGuest: false, plugins } }),
+      "GET /auth/status": () => ({ body: { bootstrapped: true, demoMode: false, plugins } }),
       "GET /plugins/i18n/es": () => ({ body: { language: "es", messages: { "Welcome back": "Hola de nuevo" } } }),
     });
     const view = () => (
@@ -86,7 +86,7 @@ describe("i18n", () => {
   it("follows the browser's language until one is picked", async () => {
     vi.spyOn(navigator, "languages", "get").mockReturnValue(["es-MX", "en"]);
     mockApi({
-      "GET /auth/status": () => ({ body: { bootstrapped: true, allowGuest: false, plugins: ["core", "i18n"] } }),
+      "GET /auth/status": () => ({ body: { bootstrapped: true, demoMode: false, plugins: ["core", "i18n"] } }),
       "GET /plugins/i18n/es": () => ({ body: { language: "es", messages: { "Welcome back": "Hola de nuevo" } } }),
     });
     render(
