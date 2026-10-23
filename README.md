@@ -79,6 +79,12 @@ Environment variables, read from `.env` in development and from `compose.yaml` i
 | `MAX_BODY_BYTES`   | `1048576`        | Largest request body the API reads                                          |
 | `CFLOW_PLUGINS`    | `core`           | Modules to enable, comma-separated; `core` is required, `i18n` adds Spanish |
 
+## Routes
+
+The web app serves `/login`, `/dashboard`, `/transactions` and `/settings`. `/` goes to the dashboard when there is a
+session, and to `/login` when there isn't. `/demo` enters a read-only guest session (with `DEMO_MODE=true`) and lands on
+`/dashboard`.
+
 ## How it fits together
 
 ```

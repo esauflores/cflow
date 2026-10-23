@@ -24,6 +24,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // From the login screen on: the browser's language, or the one picked in Settings.
   useLanguageSync();
 
+  // The login screen lives at /login; keep the URL there whenever there is no session.
+  useEffect(() => {
+    if (token || demo) return;
+    if (window.location.pathname !== "/login") window.history.replaceState({}, "", "/login");
+  }, [token, demo]);
+
   useEffect(() => {
     if (!demo || token || !status.data?.demoMode || demoStarted.current) return;
     demoStarted.current = true;
@@ -58,7 +64,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       ) : demo && status.data && !status.data.demoMode ? (
         <div className="grid justify-items-center gap-2 text-center">
           <p className="text-sm text-muted-foreground">{t("The demo is not available on this server.")}</p>
-          <a href="/" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+          <a href="/login" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
             {t("Go to sign in")}
           </a>
         </div>

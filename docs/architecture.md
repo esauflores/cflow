@@ -27,7 +27,7 @@ apps/api/
 apps/web/
   index.html
   src/
-    main.tsx              query client, routes, auth gate
+    main.tsx              query client, routes (/login, /dashboard, /transactions, /settings, /demo)
     lib/                  api.ts (client, types, session), i18n.ts, utils.ts (formatting, theme)
     components/           ui/ (shadcn), Charts, Shell, TransactionDialog, DatePicker, Logo, Money
     pages/                Login, Dashboard, Transactions, Settings

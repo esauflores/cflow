@@ -10,7 +10,7 @@ import { cn } from "@web/lib/utils.ts";
 
 // Labels are looked up when rendered, so they follow the language.
 const NAV = [
-  { to: "/", label: () => t("Dashboard"), icon: LayoutDashboard },
+  { to: "/dashboard", label: () => t("Dashboard"), icon: LayoutDashboard },
   { to: "/transactions", label: () => t("Transactions"), icon: ArrowLeftRight },
   { to: "/settings", label: () => t("Settings"), icon: Settings },
 ];
